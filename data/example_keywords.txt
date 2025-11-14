@@ -1,0 +1,14 @@
+prompts: instructions or inputs given to AI systems to generate responses
+LLM: Large Language Model, a type of AI that processes and generates human-like text
+model: a trained AI system that makes predictions or generates outputs from inputs
+generative AI: artificial intelligence that creates new content like text, images, or code
+artificial intelligence: computer systems that can perform tasks requiring human intelligence
+AGI: Artificial General Intelligence, AI with human-level cognitive abilities across all domains
+computer scientist: a researcher who studies computation, algorithms, and information processing
+software engineer: a professional who designs, develops, and maintains software systems
+engineering: the application of science and mathematics to design and build systems
+computer: an electronic device that processes data and executes instructions
+software architect: a senior engineer who designs the overall structure of software systems
+machine learning: a subset of AI where systems learn from data without explicit programming
+ML: Machine Learning, abbreviated form of machine learning
+good ol' fashioned AI: traditional rule-based AI systems before modern machine learning

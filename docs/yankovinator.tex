@@ -1,0 +1,291 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\title{Yankovinator: Song Parody Generator\\
+\large Technical Documentation}
+\author{Shyamal Suhana Chandra}
+\date{Copyright \textcopyright{} 2025}
+
+\lstset{
+    language=Swift,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    stringstyle=\color{red},
+    commentstyle=\color{green!60!black},
+    numbers=left,
+    numberstyle=\tiny,
+    stepnumber=1,
+    numbersep=5pt,
+    frame=single,
+    breaklines=true,
+    showstringspaces=false
+}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+\newpage
+
+\section{Introduction}
+
+Yankovinator is a Swift-based application that converts songs into parodies using Apple's NaturalLanguage framework and Ollama for intelligent text generation. The system maintains the original song's syllable structure while generating new lyrics that follow theme-based keyword constraints.
+
+\section{Architecture}
+
+\subsection{Core Components}
+
+Yankovinator consists of four main components:
+
+\begin{enumerate}
+    \item \textbf{SyllableCounter}: Analyzes syllable structure using NaturalLanguage framework
+    \item \textbf{OllamaClient}: Interfaces with Ollama API for parody generation
+    \item \textbf{ParodyGenerator}: Orchestrates the parody creation process
+    \item \textbf{Yankovinator}: Main library interface
+\end{enumerate}
+
+\subsection{Technology Stack}
+
+\begin{itemize}
+    \item \textbf{Swift 6.2+}: Primary programming language
+    \item \textbf{NaturalLanguage}: Apple framework for linguistic analysis
+    \item \textbf{Ollama}: Local LLM for text generation
+    \item \textbf{AsyncHTTPClient}: Asynchronous HTTP client for API communication
+    \item \textbf{ArgumentParser}: CLI argument parsing
+\end{itemize}
+
+\section{Usage}
+
+\subsection{Command Line Interface}
+
+The CLI tool provides a simple interface for generating parodies:
+
+\begin{lstlisting}
+yankovinator <lyrics-file> [--keywords <keywords-file>] 
+            [--ollama-url <url>] [--model <model-name>]
+            [--output <output-file>] [--analyze] [--verbose]
+\end{lstlisting}
+
+\subsection{Programmatic Usage}
+
+\begin{lstlisting}
+import Yankovinator
+
+let lyrics = [
+    "Twinkle twinkle little star",
+    "How I wonder what you are"
+]
+
+let keywords = [
+    "space": "the physical universe beyond Earth",
+    "stars": "luminous celestial bodies"
+]
+
+let parody = try await Yankovinator.generateParody(
+    originalLyrics: lyrics,
+    keywords: keywords
+)
+\end{lstlisting}
+
+\section{API Reference}
+
+\subsection{SyllableCounter}
+
+\subsubsection{countSyllables(in:)}
+Counts syllables in a single word.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{word: String} - The word to analyze
+\end{itemize}
+
+\textbf{Returns:} \texttt{Int} - Number of syllables
+
+\subsubsection{countSyllablesInLine(\_:)}
+Counts total syllables in a line of text.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{line: String} - The line of text
+\end{itemize}
+
+\textbf{Returns:} \texttt{Int} - Total syllable count
+
+\subsubsection{analyzeSongStructure(\_:)}
+Analyzes syllable structure of a complete song.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{lyrics: [String]} - Array of lyric lines
+\end{itemize}
+
+\textbf{Returns:} \texttt{[Int]} - Array of syllable counts per line
+
+\subsection{ParodyGenerator}
+
+\subsubsection{generateParody(originalLyrics:keywords:progressCallback:)}
+Generates a parody matching the original song's structure.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{originalLyrics: [String]} - Original song lines
+    \item \texttt{keywords: [String: String]} - Theme keywords and definitions
+    \item \texttt{progressCallback: ((Int, Int) -> Void)?} - Optional progress callback
+\end{itemize}
+
+\textbf{Returns:} \texttt{[String]} - Generated parody lines
+
+\subsection{Yankovinator}
+
+\subsubsection{generateParody(originalLyrics:keywords:ollamaURL:ollamaModel:)}
+Main entry point for parody generation.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{originalLyrics: [String]} - Original song lines
+    \item \texttt{keywords: [String: String]} - Theme keywords and definitions
+    \item \texttt{ollamaURL: String} - Ollama API base URL (default: http://localhost:11434)
+    \item \texttt{ollamaModel: String} - Ollama model name (default: llama3.2)
+\end{itemize}
+
+\textbf{Returns:} \texttt{[String]} - Generated parody lines
+
+\section{Algorithm}
+
+\subsection{Syllable Counting}
+
+The syllable counting algorithm uses a combination of:
+
+\begin{enumerate}
+    \item NaturalLanguage tokenization for word separation
+    \item Vowel counting heuristics
+    \item Special case handling for silent 'e' and 'le' endings
+\end{enumerate}
+
+\subsection{Parody Generation}
+
+The parody generation process:
+
+\begin{enumerate}
+    \item Analyze original song's syllable structure
+    \item For each line:
+        \begin{enumerate}
+            \item Extract syllable count requirement
+            \item Build prompt with theme keywords
+            \item Request generation from Ollama
+            \item Validate and clean response
+        \end{enumerate}
+    \item Return complete parody
+\end{enumerate}
+
+\section{Testing}
+
+The project includes comprehensive tests using XCTest:
+
+\begin{itemize}
+    \item Unit tests for syllable counting
+    \item Integration tests for parody generation
+    \item Keyword extraction tests
+\end{itemize}
+
+Run tests with:
+\begin{lstlisting}[language=bash]
+swift test
+\end{lstlisting}
+
+\section{Installation}
+
+\subsection{Requirements}
+
+\begin{itemize}
+    \item Swift 6.3 or later
+    \item macOS 13+ or iOS 16+
+    \item Ollama installed and running
+\end{itemize}
+
+\subsection{Build Instructions}
+
+\begin{lstlisting}[language=bash]
+# Clone repository
+git clone <repository-url>
+cd Yankovinator-swift
+
+# Build
+swift build
+
+# Run CLI
+swift run yankovinator --help
+\end{lstlisting}
+
+\section{Configuration}
+
+\subsection{Ollama Setup}
+
+Ensure Ollama is running and accessible:
+
+\begin{lstlisting}[language=bash]
+# Start Ollama
+ollama serve
+
+# Pull required model
+ollama pull llama3.2
+\end{lstlisting}
+
+\section{Examples}
+
+\subsection{Example Input}
+
+\textbf{lyrics.txt:}
+\begin{lstlisting}
+Twinkle twinkle little star
+How I wonder what you are
+Up above the world so high
+Like a diamond in the sky
+\end{lstlisting}
+
+\textbf{keywords.txt:}
+\begin{lstlisting}
+science: the study of natural phenomena
+space: the physical universe beyond Earth
+exploration: the action of traveling to discover
+\end{lstlisting}
+
+\subsection{Example Output}
+
+The generated parody maintains syllable structure while incorporating the theme keywords.
+
+\section{Troubleshooting}
+
+\subsection{Common Issues}
+
+\begin{itemize}
+    \item \textbf{Ollama not found}: Ensure Ollama is running at the specified URL
+    \item \textbf{Model not available}: Pull the required model using \texttt{ollama pull}
+    \item \textbf{Syllable count mismatch}: The algorithm uses heuristics and may not be 100\% accurate
+\end{itemize}
+
+\section{License}
+
+Copyright \textcopyright{} 2025, Shyamal Suhana Chandra
+
+\section{References}
+
+\begin{itemize}
+    \item Apple NaturalLanguage Framework: \url{https://developer.apple.com/documentation/NaturalLanguage}
+    \item Ollama Documentation: \url{https://ollama.ai/docs}
+    \item Swift Package Manager: \url{https://swift.org/package-manager/}
+\end{itemize}
+
+\end{document}
+
