@@ -120,12 +120,14 @@ struct YankovinatorCLI: AsyncParsableCommand {
             throw ValidationError("Could not read lyrics file: \(lyricsFile)")
         }
         
+        // Preserve empty lines to maintain song structure
         let originalLyrics = lyricsContent
             .components(separatedBy: .newlines)
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
         
-        guard !originalLyrics.isEmpty else {
+        // Check if there are any non-empty lines
+        let nonEmptyLines = originalLyrics.filter { !$0.isEmpty }
+        guard !nonEmptyLines.isEmpty else {
             throw ValidationError("No lyrics found in file")
         }
         
@@ -135,12 +137,22 @@ struct YankovinatorCLI: AsyncParsableCommand {
         
         // Analyze structure if requested
         if analyze {
-            let structure = Yankovinator.analyzeStructure(originalLyrics)
+            // Only analyze non-empty lines
+            let nonEmptyLyrics = originalLyrics.filter { !$0.isEmpty }
+            let structure = Yankovinator.analyzeStructure(nonEmptyLyrics)
             print("\nSyllable Analysis:")
             print("=" * 50)
-            for (index, (line, count)) in zip(originalLyrics, structure).enumerated() {
-                print("Line \(index + 1): \(count) syllables")
-                print("  \(line)")
+            var structureIndex = 0
+            for (index, line) in originalLyrics.enumerated() {
+                if line.isEmpty {
+                    print("Line \(index + 1): (empty line)")
+                    print("  ")
+                } else {
+                    let count = structure[structureIndex]
+                    print("Line \(index + 1): \(count) syllables")
+                    print("  \(line)")
+                    structureIndex += 1
+                }
             }
             print("=" * 50)
             print("")
@@ -213,13 +225,16 @@ struct YankovinatorCLI: AsyncParsableCommand {
         do {
             parodyLines = try await generator.generateParody(
                 originalLyrics: originalLyrics,
-                keywords: keywordsDict
-            ) { line, total in
-                if verbose {
-                    print("Progress: \(line)/\(total)", terminator: "\r")
-                    fflush(stdout)
-                }
-            }
+                keywords: keywordsDict,
+                progressCallback: { line, total in
+                    if verbose {
+                        print("Progress: \(line)/\(total)", terminator: "\r")
+                        fflush(stdout)
+                    }
+                },
+                refinementPasses: 2,
+                verbose: verbose
+            )
             
             if verbose {
                 print("\n")
@@ -229,13 +244,21 @@ struct YankovinatorCLI: AsyncParsableCommand {
             
             // Provide helpful suggestions based on error type
             if case .modelNotFound(let modelName) = error {
-                // Check what models are actually available
                 errorMsg += "\n\n"
                 errorMsg += "To fix this:\n"
                 errorMsg += "1. Check available models: ollama list\n"
                 errorMsg += "2. Install the model: ollama pull \(modelName)\n"
                 errorMsg += "   (Note: Model names may include tags like 'llama3.2:3b')\n"
                 errorMsg += "3. Or use an existing model with --model flag\n"
+                errorMsg += "   Example: --model llama3.2:3b\n"
+            } else if case .httpError(let statusCode, let message) = error {
+                errorMsg += "\n\n"
+                errorMsg += "HTTP Error \(statusCode)\(message)\n"
+                errorMsg += "To fix this:\n"
+                errorMsg += "1. Ensure Ollama is running: ollama serve\n"
+                errorMsg += "2. Verify Ollama is accessible at: \(ollamaURL)\n"
+                errorMsg += "3. Check if the model exists: ollama list\n"
+                errorMsg += "4. Try a different model: --model <model-name>\n"
             } else {
                 errorMsg += "\n\n"
                 errorMsg += "To fix this:\n"
@@ -245,6 +268,16 @@ struct YankovinatorCLI: AsyncParsableCommand {
             }
             
             throw ValidationError(errorMsg)
+        } catch {
+            // Catch any other errors
+            throw ValidationError("""
+            Unexpected error during parody generation: \(error.localizedDescription)
+            
+            To fix this:
+            1. Ensure Ollama is running: ollama serve
+            2. Check Ollama logs for details
+            3. Verify the model exists: ollama list
+            """)
         }
         
         // Output results

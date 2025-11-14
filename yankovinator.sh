@@ -6,26 +6,21 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-# Build the project if needed
-if [ ! -f ".build/debug/yankovinator" ] && [ ! -f ".build/release/yankovinator" ]; then
-    echo "Building Yankovinator..."
-    swift build > /dev/null 2>&1
-fi
-
-# Find the executable
-if [ -f ".build/release/yankovinator" ]; then
-    EXECUTABLE=".build/release/yankovinator"
-elif [ -f ".build/debug/yankovinator" ]; then
-    EXECUTABLE=".build/debug/yankovinator"
-else
-    echo "Error: Yankovinator executable not found. Building..."
+# Always build to ensure we have the latest code
+echo "Building Yankovinator..."
+swift build > /dev/null 2>&1 || {
+    echo "Build failed!"
     swift build
-    if [ -f ".build/debug/yankovinator" ]; then
-        EXECUTABLE=".build/debug/yankovinator"
-    else
-        echo "Error: Failed to build Yankovinator"
-        exit 1
-    fi
+    exit 1
+}
+
+# Find the executable using swift's bin path
+BIN_PATH=$(swift build --show-bin-path)
+EXECUTABLE="$BIN_PATH/yankovinator"
+
+if [ ! -f "$EXECUTABLE" ]; then
+    echo "Error: Yankovinator executable not found at $EXECUTABLE"
+    exit 1
 fi
 
 # Filter out any empty arguments or spaces
