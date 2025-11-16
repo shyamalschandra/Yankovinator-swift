@@ -17,6 +17,9 @@ let package = Package(
         .executable(
             name: "yankovinator",
             targets: ["YankovinatorCLI"]),
+        .executable(
+            name: "keyword-generator",
+            targets: ["KeywordGeneratorCLI"]),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.3.0"),
@@ -30,6 +33,12 @@ let package = Package(
             ]),
         .executableTarget(
             name: "YankovinatorCLI",
+            dependencies: [
+                "Yankovinator",
+                .product(name: "ArgumentParser", package: "swift-argument-parser"),
+            ]),
+        .executableTarget(
+            name: "KeywordGeneratorCLI",
             dependencies: [
                 "Yankovinator",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),

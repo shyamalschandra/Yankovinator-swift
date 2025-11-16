@@ -93,5 +93,23 @@ public struct SyllableCounter {
     public static func analyzeSongStructure(_ lyrics: [String]) -> [Int] {
         return lyrics.map { countSyllablesInLine($0) }
     }
+    
+    /// Analyze word-by-word syllable structure of a line
+    /// - Parameter line: The line of text
+    /// - Returns: Array of (word, syllableCount) tuples
+    public static func analyzeWordSyllables(in line: String) -> [(word: String, syllables: Int)] {
+        let tokenizer = NLTokenizer(unit: .word)
+        tokenizer.string = line
+        
+        var wordSyllables: [(word: String, syllables: Int)] = []
+        tokenizer.enumerateTokens(in: line.startIndex..<line.endIndex) { tokenRange, _ in
+            let word = String(line[tokenRange])
+            let syllableCount = countSyllables(in: word)
+            wordSyllables.append((word: word, syllables: syllableCount))
+            return true
+        }
+        
+        return wordSyllables
+    }
 }
 

@@ -41,16 +41,54 @@ public class OllamaClient {
     ///   - keywords: Theme keywords and their definitions
     ///   - previousLines: Previous lines for context
     ///   - customPrompt: Optional custom prompt (overrides default)
+    ///   - rhymeGroup: Rhyme group identifier (A, B, C, etc.) for this line
+    ///   - rhymingLines: Lines that should rhyme with this one
+    ///   - rhymeScheme: The overall rhyme scheme pattern (e.g., "ABAB", "AABB")
+    ///   - wordSyllablePattern: Pattern showing word-by-word syllable counts (e.g., "hello(2) world(1)")
+    ///   - wordSyllables: Array of syllable counts per word position
     /// - Returns: Generated parody line
     public func generateParodyLine(
         originalLine: String,
         syllableCount: Int,
         keywords: [String: String],
         previousLines: [String] = [],
-        customPrompt: String? = nil
+        customPrompt: String? = nil,
+        rhymeGroup: String? = nil,
+        rhymingLines: [String] = [],
+        rhymeScheme: String? = nil,
+        wordSyllablePattern: String? = nil,
+        wordSyllables: [Int]? = nil
     ) async throws -> String {
         let keywordDescriptions = keywords.map { "\($0.key): \($0.value)" }.joined(separator: ", ")
         let context = previousLines.isEmpty ? "" : "Previous lines:\n\(previousLines.joined(separator: "\n"))\n\n"
+        
+        // Build word-by-word syllable matching instructions
+        var wordSyllableInstructions = ""
+        if let wordPattern = wordSyllablePattern, let wordSylls = wordSyllables, !wordSylls.isEmpty {
+            wordSyllableInstructions = """
+            
+            CRITICAL: Word-by-word syllable matching required!
+            Original line syllable pattern: \(wordPattern)
+            You MUST substitute each word with a word that has the EXACT SAME number of syllables in the same position.
+            For example, if the original has "hello(2) world(1)", your line must have a 2-syllable word followed by a 1-syllable word.
+            The syllable pattern must be: \(wordSylls.map { String($0) }.joined(separator: "-"))
+            """
+        }
+        
+        // Build rhyming instructions
+        var rhymingInstructions = ""
+        if let rhymeGroup = rhymeGroup, let scheme = rhymeScheme {
+            rhymingInstructions = "\n6. MUST RHYME with rhyme group '\(rhymeGroup)' in the \(scheme) rhyme scheme"
+            if !rhymingLines.isEmpty {
+                rhymingInstructions += "\n   The following lines rhyme with this one (use them as reference for the ending sound):"
+                for rhymingLine in rhymingLines {
+                    rhymingInstructions += "\n   - \(rhymingLine)"
+                }
+                rhymingInstructions += "\n   Your line must end with a word that rhymes with the ending words of these lines."
+            } else {
+                rhymingInstructions += "\n   This is the first line in rhyme group '\(rhymeGroup)'. Future lines in this group will need to rhyme with your line."
+            }
+        }
         
         // Use custom prompt if provided, otherwise use default
         let prompt: String
@@ -58,12 +96,21 @@ public class OllamaClient {
             prompt = customPrompt
         } else {
             prompt = """
-            You are a creative parody writer. Generate a single line of parody poetry that:
-            1. Has exactly \(syllableCount) syllables
+            You are an exceptional creative parody writer crafting lyrics that amaze with artistic brilliance.
+            Generate a single line of parody poetry that:
+            
+            1. Has exactly \(syllableCount) syllables total\(wordSyllableInstructions)
             2. Follows the theme of these keywords: \(keywordDescriptions)
             3. Maintains the rhythm and style of the original: "\(originalLine)"
             4. Preserves punctuation style similar to the original
-            5. Is creative, humorous, and appropriate
+            5. Is creative, humorous, and appropriate\(rhymingInstructions)
+            
+            CRITICAL QUALITY REQUIREMENTS:
+            - The line must make COGENT SENSE - it must be grammatically correct and semantically meaningful
+            - The line must have ARTISTIC STYLE that AMAZES - use vivid imagery, clever wordplay, poetic devices, and evocative language
+            - Each word substitution should be thoughtful and enhance the artistic quality
+            - The line should flow naturally and sound like it belongs in a professional song
+            - Avoid awkward phrasing or forced rhymes - prioritize natural, beautiful language
             
             \(context)Generate ONLY the parody line, nothing else. No explanations, no quotes, just the line:
             """
@@ -251,6 +298,137 @@ public class OllamaClient {
         if !isAvailable {
             throw OllamaError.modelNotFound(model: model)
         }
+    }
+    
+    /// Generate keywords with definitions from subjects
+    /// - Parameters:
+    ///   - subjects: Array of subjects or topics to generate keywords for
+    ///   - count: Number of keyword pairs to generate (default: 10)
+    /// - Returns: Dictionary mapping keywords to their definitions
+    public func generateKeywords(
+        from subjects: [String],
+        count: Int = 10
+    ) async throws -> [String: String] {
+        let subjectsList = subjects.joined(separator: ", ")
+        
+        let prompt = """
+        Generate \(count) keyword:definition pairs related to the following subject(s): \(subjectsList)
+        
+        Requirements:
+        1. Each keyword should be a single word or short phrase (1-3 words max)
+        2. Each definition should be a clear, concise explanation (one sentence)
+        3. Keywords should be relevant to the given subject(s)
+        4. Format your response EXACTLY as: keyword: definition (one per line)
+        5. Do not include any additional text, explanations, or formatting
+        6. Do not number the items
+        7. Do not use quotes around keywords or definitions
+        
+        Example format:
+        keyword1: definition of keyword1
+        keyword2: definition of keyword2
+        keyword3: definition of keyword3
+        
+        Generate \(count) keyword:definition pairs now:
+        """
+        
+        // Ensure baseURL doesn't have trailing slash
+        let cleanBaseURL = baseURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let apiURL = "\(cleanBaseURL)/api/generate"
+        
+        guard let url = URL(string: apiURL) else {
+            throw OllamaError.invalidURL
+        }
+        
+        var requestBody: [String: Any] = [
+            "model": model,
+            "prompt": prompt,
+            "stream": false
+        ]
+        
+        let options: [String: Any] = [
+            "temperature": 0.7,
+            "top_p": 0.9,
+            "num_predict": 500
+        ]
+        requestBody["options"] = options
+        
+        let jsonData = try JSONSerialization.data(withJSONObject: requestBody)
+        
+        var request = HTTPClientRequest(url: apiURL)
+        request.method = .POST
+        request.headers.add(name: "Content-Type", value: "application/json")
+        request.headers.add(name: "Accept", value: "application/json")
+        request.body = .bytes(ByteBuffer(data: jsonData))
+        
+        let response: HTTPClientResponse
+        do {
+            response = try await httpClient.execute(request, timeout: .seconds(60))
+        } catch {
+            throw OllamaError.networkError(error)
+        }
+        
+        var responseData = Data()
+        for try await buffer in response.body {
+            responseData.append(contentsOf: buffer.readableBytesView)
+        }
+        
+        guard response.status == .ok else {
+            let statusCode = Int(response.status.code)
+            var errorMessage = ""
+            
+            if !responseData.isEmpty {
+                if let json = try? JSONSerialization.jsonObject(with: responseData) as? [String: Any],
+                   let error = json["error"] as? String {
+                    errorMessage = ": \(error)"
+                } else {
+                    let responseText = String(data: responseData, encoding: .utf8) ?? ""
+                    let preview = String(responseText.prefix(200))
+                    errorMessage = ": \(preview)"
+                }
+            }
+            
+            if statusCode == 404 {
+                throw OllamaError.modelNotFound(model: model)
+            }
+            
+            throw OllamaError.httpError(statusCode: statusCode, message: errorMessage)
+        }
+        
+        guard !responseData.isEmpty else {
+            throw OllamaError.invalidResponse
+        }
+        
+        guard let json = try JSONSerialization.jsonObject(with: responseData) as? [String: Any],
+              let responseText = json["response"] as? String else {
+            throw OllamaError.invalidResponse
+        }
+        
+        // Parse the response into keyword:definition pairs
+        let lines = responseText
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        
+        var keywords: [String: String] = [:]
+        
+        for line in lines {
+            // Look for the pattern "keyword: definition"
+            if let colonIndex = line.firstIndex(of: ":") {
+                let keyword = String(line[..<colonIndex]).trimmingCharacters(in: .whitespacesAndNewlines)
+                let definition = String(line[line.index(after: colonIndex)...]).trimmingCharacters(in: .whitespacesAndNewlines)
+                
+                // Remove quotes if present
+                let cleanKeyword = keyword.trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
+                let cleanDefinition = definition.trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
+                
+                if !cleanKeyword.isEmpty && !cleanDefinition.isEmpty {
+                    keywords[cleanKeyword] = cleanDefinition
+                }
+            }
+        }
+        
+        return keywords
     }
 }
 

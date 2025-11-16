@@ -50,7 +50,15 @@ public class ParodyGenerator {
         // Analyze original song structure (only non-empty lines)
         let syllableStructure = syllableCounter.analyzeSongStructure(nonEmptyLyrics.map { $0.1 })
         
+        // Detect rhyming scheme from original lyrics
+        let (rhymeGroups, rhymeScheme) = RhymeSchemeAnalyzer.detectRhymeScheme(from: nonEmptyLyrics.map { $0.1 })
+        
+        if verbose {
+            print("Detected rhyme scheme: \(rhymeScheme)")
+        }
+        
         var parodyLines: [String] = []
+        var nonEmptyParodyLines: [String] = [] // Track non-empty lines separately for rhyming
         let totalLines = originalLyrics.count
         var nonEmptyIndex = 0
         
@@ -67,14 +75,37 @@ public class ParodyGenerator {
             
             progressCallback?(index + 1, totalLines)
             
-            // Generate parody line matching syllable count
+            // Get rhyming constraints for this line
+            // nonEmptyIndex is 1-based at this point (we increment after), so use nonEmptyIndex - 1 for 0-based
+            let currentLineIndex = nonEmptyIndex - 1
+            let currentRhymeGroup = RhymeSchemeAnalyzer.getRhymeGroup(for: currentLineIndex, in: rhymeGroups)
+            let rhymingLineIndices = RhymeSchemeAnalyzer.getRhymingLineIndices(for: currentLineIndex, in: rhymeGroups)
+            
+            // Get lines that should rhyme with this one (from already generated non-empty parody lines)
+            var rhymingLines: [String] = []
+            for rhymingIndex in rhymingLineIndices {
+                if rhymingIndex < nonEmptyParodyLines.count {
+                    rhymingLines.append(nonEmptyParodyLines[rhymingIndex])
+                }
+            }
+            
+            // Analyze word-by-word syllable structure of original line
+            let wordSyllables = syllableCounter.analyzeWordSyllables(in: originalLine)
+            let wordSyllablePattern = wordSyllables.map { "\($0.word)(\($0.syllables))" }.joined(separator: " ")
+            
+            // Generate parody line matching syllable count and rhyming requirements
             var parodyLine: String
             do {
                 parodyLine = try await ollamaClient.generateParodyLine(
                     originalLine: originalLine,
                     syllableCount: syllableCount,
                     keywords: keywords,
-                    previousLines: Array(parodyLines.suffix(3).filter { !$0.isEmpty }) // Last 3 non-empty lines for context
+                    previousLines: Array(parodyLines.suffix(3).filter { !$0.isEmpty }), // Last 3 non-empty lines for context
+                    rhymeGroup: currentRhymeGroup,
+                    rhymingLines: rhymingLines,
+                    rhymeScheme: rhymeScheme,
+                    wordSyllablePattern: wordSyllablePattern,
+                    wordSyllables: wordSyllables.map { $0.syllables }
                 )
             } catch let error as OllamaError {
                 // If generation fails, provide helpful error
@@ -90,16 +121,31 @@ public class ParodyGenerator {
                 throw OllamaError.networkError(error)
             }
             
-            // Refinement passes for punctuation correction
+            // Refinement passes for word-by-word syllable matching and punctuation correction
             for pass in 1...refinementPasses {
                 do {
-                    parodyLine = try await refineLinePunctuation(
-                        line: parodyLine,
-                        originalLine: originalLine,
-                        syllableCount: syllableCount,
-                        keywords: keywords,
-                        pass: pass
-                    )
+                    // First pass: verify and refine word-by-word syllable matching
+                    if pass == 1 {
+                        parodyLine = try await refineWordSyllableMatching(
+                            line: parodyLine,
+                            originalLine: originalLine,
+                            syllableCount: syllableCount,
+                            keywords: keywords,
+                            wordSyllables: wordSyllables.map { $0.syllables },
+                            rhymeGroup: currentRhymeGroup,
+                            rhymingLines: rhymingLines,
+                            rhymeScheme: rhymeScheme
+                        )
+                    } else {
+                        // Subsequent passes: punctuation correction
+                        parodyLine = try await refineLinePunctuation(
+                            line: parodyLine,
+                            originalLine: originalLine,
+                            syllableCount: syllableCount,
+                            keywords: keywords,
+                            pass: pass
+                        )
+                    }
                 } catch {
                     // If refinement fails, use the original generated line
                     // Log but don't fail the entire generation
@@ -111,9 +157,97 @@ public class ParodyGenerator {
             }
             
             parodyLines.append(parodyLine)
+            nonEmptyParodyLines.append(parodyLine) // Track for rhyming
         }
         
         return parodyLines
+    }
+    
+    /// Refine word-by-word syllable matching
+    private func refineWordSyllableMatching(
+        line: String,
+        originalLine: String,
+        syllableCount: Int,
+        keywords: [String: String],
+        wordSyllables: [Int],
+        rhymeGroup: String,
+        rhymingLines: [String],
+        rhymeScheme: String
+    ) async throws -> String {
+        // Analyze the generated line's word syllables
+        let generatedWordSyllables = syllableCounter.analyzeWordSyllables(in: line)
+        let generatedSyllableCounts = generatedWordSyllables.map { $0.syllables }
+        
+        // Check if word-by-word matching is correct
+        var needsRefinement = false
+        if generatedSyllableCounts.count == wordSyllables.count {
+            for (genCount, origCount) in zip(generatedSyllableCounts, wordSyllables) {
+                if genCount != origCount {
+                    needsRefinement = true
+                    break
+                }
+            }
+        } else {
+            needsRefinement = true
+        }
+        
+        // If matching is correct, return as is
+        if !needsRefinement {
+            return line
+        }
+        
+        // Request refinement from Ollama
+        let keywordDescriptions = keywords.map { "\($0.key): \($0.value)" }.joined(separator: ", ")
+        let wordPattern = wordSyllables.map { String($0) }.joined(separator: "-")
+        let generatedPattern = generatedSyllableCounts.map { String($0) }.joined(separator: "-")
+        
+        var rhymingInfo = ""
+        if !rhymingLines.isEmpty {
+            rhymingInfo = "\nLines that must rhyme with this: \(rhymingLines.joined(separator: ", "))"
+        }
+        
+        let prompt = """
+        Refine this parody line to match the EXACT word-by-word syllable pattern of the original.
+        
+        Original line: "\(originalLine)"
+        Required syllable pattern (one number per word): \(wordPattern)
+        Current line: "\(line)"
+        Current syllable pattern: \(generatedPattern)
+        
+        Requirements:
+        1. Each word must have the EXACT SAME number of syllables as the corresponding word in the original
+        2. Total syllables: \(syllableCount)
+        3. Theme: \(keywordDescriptions)
+        4. Rhyme group: \(rhymeGroup) in \(rhymeScheme) scheme\(rhymingInfo)
+        5. The line must make COGENT SENSE and have ARTISTIC STYLE that AMAZES
+        6. Use vivid imagery, clever wordplay, and evocative language
+        7. The line should flow naturally like professional song lyrics
+        
+        Generate a refined line that matches the syllable pattern EXACTLY while maintaining meaning, style, and quality.
+        Return ONLY the refined line, nothing else:
+        """
+        
+        let refined = try await ollamaClient.generateParodyLine(
+            originalLine: originalLine,
+            syllableCount: syllableCount,
+            keywords: keywords,
+            previousLines: [],
+            customPrompt: prompt,
+            rhymeGroup: rhymeGroup,
+            rhymingLines: rhymingLines,
+            rhymeScheme: rhymeScheme,
+            wordSyllablePattern: nil,
+            wordSyllables: wordSyllables
+        )
+        
+        // Validate the refined line has correct syllable count
+        let refinedSyllables = syllableCounter.countSyllablesInLine(refined)
+        if abs(refinedSyllables - syllableCount) > 2 {
+            // If refinement changed syllable count too much, use original
+            return line
+        }
+        
+        return refined
     }
     
     /// Refine line punctuation to match original style

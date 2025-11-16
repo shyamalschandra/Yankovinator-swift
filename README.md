@@ -8,6 +8,7 @@ Yankovinator is a Swift-based application that converts songs into parodies usin
 
 - ✅ Syllable-accurate parody generation
 - ✅ Theme-based keyword integration
+- ✅ Automatic keyword generation from subjects using Ollama
 - ✅ NaturalLanguage framework integration (Swift 6.3+)
 - ✅ Ollama LLM support
 - ✅ Command-line interface
@@ -49,6 +50,41 @@ ollama pull llama3.2
 ## Usage
 
 ### Command Line Interface
+
+Yankovinator provides two CLI tools:
+
+1. **yankovinator**: Generates parodies from song lyrics
+2. **keyword-generator**: Generates keyword:definition pairs from subjects using Ollama
+
+#### Keyword Generator
+
+Generate keyword:definition pairs for use with Yankovinator:
+
+```bash
+swift run keyword-generator <subject1> [subject2] ... [options]
+```
+
+**Options:**
+- `--count, -c <number>`: Number of keyword pairs to generate (default: 10, max: 100)
+- `--ollama-url, -u <url>`: Ollama API base URL (default: http://localhost:11434)
+- `--model, -m <name>`: Ollama model name (default: llama3.2:3b)
+- `--output, -o <file>`: Output file path (default: stdout)
+- `--verbose, -v`: Verbose output
+
+**Examples:**
+
+```bash
+# Generate 10 keywords about AI
+swift run keyword-generator "artificial intelligence" --output ai_keywords.txt
+
+# Generate 15 keywords about multiple subjects
+swift run keyword-generator "space exploration" "NASA" --count 15 --output space_keywords.txt
+
+# Generate keywords and print to stdout
+swift run keyword-generator "machine learning" "deep learning" --verbose
+```
+
+#### Parody Generator
 
 You can use Yankovinator in two ways:
 
