@@ -47,7 +47,7 @@ jobs:
       - name: Build LaTeX Technical Paper
         uses: xu-cheng/latex-action@v3
         with:
-          root_file: docs/yankovinator.tex
+          root_file: yankovinator.tex
           latexmk_use_xelatex: false
           args: -pdf -file-line-error -halt-on-error -interaction=nonstopmode
           working_directory: docs
@@ -55,7 +55,7 @@ jobs:
       - name: Build LaTeX Presentation
         uses: xu-cheng/latex-action@v3
         with:
-          root_file: docs/presentation.tex
+          root_file: presentation.tex
           latexmk_use_xelatex: false
           args: -pdf -file-line-error -halt-on-error -interaction=nonstopmode
           working_directory: docs
@@ -63,7 +63,7 @@ jobs:
       - name: Build LaTeX Reference Manual
         uses: xu-cheng/latex-action@v3
         with:
-          root_file: docs/reference.tex
+          root_file: reference.tex
           latexmk_use_xelatex: false
           args: -pdf -file-line-error -halt-on-error -interaction=nonstopmode
           working_directory: docs
