@@ -222,6 +222,7 @@ public class ParodyGenerator {
         5. The line must make COGENT SENSE and have ARTISTIC STYLE that AMAZES
         6. Use vivid imagery, clever wordplay, and evocative language
         7. The line should flow naturally like professional song lyrics
+        8. Use proper contractions with apostrophes (e.g., "don't", "can't", "it's", "won't") when appropriate for natural speech
         
         Generate a refined line that matches the syllable pattern EXACTLY while maintaining meaning, style, and quality.
         Return ONLY the refined line, nothing else:
@@ -286,6 +287,7 @@ public class ParodyGenerator {
         Current parody line: "\(line)"
         
         Refine ONLY the punctuation to match the original style. Keep the same words and meaning.
+        Use proper contractions with apostrophes (e.g., "don't", "can't", "it's", "won't") when appropriate.
         Return ONLY the refined line, nothing else:
         """
         

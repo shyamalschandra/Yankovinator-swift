@@ -111,6 +111,7 @@ public class OllamaClient {
             - Each word substitution should be thoughtful and enhance the artistic quality
             - The line should flow naturally and sound like it belongs in a professional song
             - Avoid awkward phrasing or forced rhymes - prioritize natural, beautiful language
+            - Use proper contractions with apostrophes (e.g., "don't", "can't", "it's", "won't") when appropriate for natural speech
             
             \(context)Generate ONLY the parody line, nothing else. No explanations, no quotes, just the line:
             """
@@ -238,11 +239,25 @@ public class OllamaClient {
             throw OllamaError.invalidResponse
         }
         
-        // Clean up the response - remove quotes, extra whitespace
-        let cleaned = responseText
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .replacingOccurrences(of: "\"", with: "")
-            .replacingOccurrences(of: "'", with: "")
+        // Clean up the response - remove wrapping quotes, preserve apostrophes in contractions
+        var cleaned = responseText.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Remove wrapping double quotes only (at start/end)
+        if cleaned.hasPrefix("\"") && cleaned.hasSuffix("\"") && cleaned.count > 1 {
+            cleaned = String(cleaned.dropFirst().dropLast())
+        }
+        
+        // For single quotes, only remove if they're clearly wrapping quotes (not contractions)
+        // A wrapping single quote would be at both ends with no apostrophes in between
+        // We check if there are any apostrophes in the middle that would indicate contractions
+        if cleaned.hasPrefix("'") && cleaned.hasSuffix("'") && cleaned.count > 1 {
+            let middle = String(cleaned.dropFirst().dropLast())
+            // Only remove if there are no apostrophes in the middle (indicating it's a wrapping quote, not contractions)
+            if !middle.contains("'") {
+                cleaned = middle
+            }
+            // If there are apostrophes in the middle, keep them (they're contractions)
+        }
         
         return cleaned
     }
