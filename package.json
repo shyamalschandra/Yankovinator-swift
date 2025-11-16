@@ -1,0 +1,22 @@
+{
+  "name": "yankovinator-website",
+  "version": "1.0.0",
+  "description": "GitHub Pages website for Yankovinator - AI-powered parody generator",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "clean": "rm -f docs/script.js docs/script.js.map"
+  },
+  "keywords": [
+    "yankovinator",
+    "parody",
+    "ai",
+    "swift"
+  ],
+  "author": "Shyamal Suhana Chandra",
+  "license": "Copyright (C) 2025, Shyamal Suhana Chandra",
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "@types/node": "^20.10.6"
+  }
+}

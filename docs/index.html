@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Yankovinator - AI-powered parody generator that creates amazing song parodies with perfect syllable matching and rhyming schemes">
+    <title>Yankovinator - AI Parody Generator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="background-animation">
+        <svg class="bg-svg" viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+                </linearGradient>
+                <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#f093fb;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#f5576c;stop-opacity:1" />
+                </linearGradient>
+            </defs>
+            <circle class="floating-circle" cx="200" cy="150" r="80" fill="url(#grad1)" opacity="0.3">
+                <animate attributeName="cy" values="150;200;150" dur="8s" repeatCount="indefinite" />
+            </circle>
+            <circle class="floating-circle" cx="800" cy="300" r="120" fill="url(#grad2)" opacity="0.2">
+                <animate attributeName="cy" values="300;400;300" dur="10s" repeatCount="indefinite" />
+            </circle>
+            <circle class="floating-circle" cx="1000" cy="600" r="100" fill="url(#grad1)" opacity="0.25">
+                <animate attributeName="cy" values="600;550;600" dur="12s" repeatCount="indefinite" />
+            </circle>
+            <circle class="floating-circle" cx="150" cy="500" r="90" fill="url(#grad2)" opacity="0.3">
+                <animate attributeName="cx" values="150;200;150" dur="9s" repeatCount="indefinite" />
+            </circle>
+            <!-- Animated particles -->
+            <circle class="particle" cx="300" cy="200" r="3" fill="#667eea" opacity="0.6">
+                <animate attributeName="cy" values="200;100;200" dur="6s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.6;0.2;0.6" dur="6s" repeatCount="indefinite" />
+            </circle>
+            <circle class="particle" cx="600" cy="400" r="4" fill="#f093fb" opacity="0.5">
+                <animate attributeName="cy" values="400;300;400" dur="7s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.5;0.1;0.5" dur="7s" repeatCount="indefinite" />
+            </circle>
+            <circle class="particle" cx="900" cy="150" r="2.5" fill="#764ba2" opacity="0.7">
+                <animate attributeName="cy" values="150;250;150" dur="5s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.7;0.3;0.7" dur="5s" repeatCount="indefinite" />
+            </circle>
+            <!-- Musical note SVG -->
+            <g class="musical-note" transform="translate(500, 400)">
+                <path d="M 0 0 Q 10 -20, 20 0 Q 30 20, 20 40 L 20 60 L 0 60 L 0 40 Q -10 20, 0 0" 
+                      fill="#667eea" opacity="0.4">
+                    <animateTransform attributeName="transform" type="translate" 
+                                      values="500,400; 520,380; 500,400" 
+                                      dur="4s" repeatCount="indefinite" />
+                </path>
+            </g>
+        </svg>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <svg class="logo-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="3"/>
+                    <path d="M 30 50 Q 50 30, 70 50 Q 50 70, 30 50" fill="currentColor" opacity="0.7"/>
+                    <circle cx="50" cy="50" r="8" fill="currentColor"/>
+                </svg>
+                <span class="logo-text">Yankovinator</span>
+            </div>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#demo">Demo</a>
+                <a href="#installation">Installation</a>
+                <a href="https://github.com/shyamalschandra/Yankovinator-swift" target="_blank" class="github-link">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                    GitHub
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1 class="hero-title">
+                    <span class="title-line">Transform Songs into</span>
+                    <span class="title-line highlight">Amazing Parodies</span>
+                </h1>
+                <p class="hero-subtitle">
+                    AI-powered parody generator with perfect syllable matching, 
+                    rhyming schemes, and artistic style that amazes
+                </p>
+                <div class="hero-buttons">
+                    <a href="#installation" class="btn btn-primary">
+                        <span>Get Started</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </a>
+                    <a href="https://github.com/shyamalschandra/Yankovinator-swift" target="_blank" class="btn btn-secondary">
+                        View on GitHub
+                    </a>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="code-window">
+                    <div class="window-header">
+                        <div class="window-controls">
+                            <span class="control red"></span>
+                            <span class="control yellow"></span>
+                            <span class="control green"></span>
+                        </div>
+                        <span class="window-title">yankovinator</span>
+                    </div>
+                    <div class="code-content">
+                        <div class="code-line">
+                            <span class="code-prompt">$</span>
+                            <span class="code-text">swift run yankovinator lyrics.txt</span>
+                        </div>
+                        <div class="code-line typing">
+                            <span class="code-output">Generating parody with</span>
+                        </div>
+                        <div class="code-line typing delay-1">
+                            <span class="code-output">✨ Perfect syllable matching</span>
+                        </div>
+                        <div class="code-line typing delay-2">
+                            <span class="code-output">🎵 Rhyming scheme: ABAB</span>
+                        </div>
+                        <div class="code-line typing delay-3">
+                            <span class="code-output">🎨 Artistic style that amazes</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="scroll-indicator">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 5v14M5 12l7 7 7-7"/>
+            </svg>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title">Powerful Features</h2>
+            <div class="features-grid">
+                <div class="feature-card" data-aos="fade-up">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="3"/>
+                            <path d="M 30 50 L 45 65 L 70 35" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <h3>Word-by-Word Syllable Matching</h3>
+                    <p>Each word is substituted with the exact same number of syllables, maintaining perfect rhythm and flow.</p>
+                </div>
+                <div class="feature-card" data-aos="fade-up" data-aos-delay="100">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M 20 50 Q 35 30, 50 50 T 80 50" stroke="currentColor" stroke-width="4" fill="none"/>
+                            <circle cx="20" cy="50" r="5" fill="currentColor"/>
+                            <circle cx="50" cy="50" r="5" fill="currentColor"/>
+                            <circle cx="80" cy="50" r="5" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <h3>Automatic Rhyme Detection</h3>
+                    <p>Detects and enforces rhyming schemes (ABAB, AABB, AAAA) automatically from original lyrics.</p>
+                </div>
+                <div class="feature-card" data-aos="fade-up" data-aos-delay="200">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="20" y="30" width="60" height="40" rx="5" fill="none" stroke="currentColor" stroke-width="3"/>
+                            <path d="M 30 50 L 45 50 M 55 50 L 70 50" stroke="currentColor" stroke-width="3"/>
+                        </svg>
+                    </div>
+                    <h3>Artistic Style</h3>
+                    <p>Generates cogent, meaningful lyrics with vivid imagery and poetic devices that amaze.</p>
+                </div>
+                <div class="feature-card" data-aos="fade-up" data-aos-delay="300">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="30" cy="30" r="15" fill="currentColor" opacity="0.3"/>
+                            <circle cx="70" cy="30" r="15" fill="currentColor" opacity="0.3"/>
+                            <circle cx="50" cy="70" r="15" fill="currentColor" opacity="0.3"/>
+                            <line x1="30" y1="30" x2="50" y2="70" stroke="currentColor" stroke-width="2"/>
+                            <line x1="70" y1="30" x2="50" y2="70" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <h3>Keyword Generation</h3>
+                    <p>Generate theme keywords from subjects using Ollama LLM for custom parody themes.</p>
+                </div>
+                <div class="feature-card" data-aos="fade-up" data-aos-delay="400">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="25" y="25" width="50" height="50" rx="5" fill="none" stroke="currentColor" stroke-width="3"/>
+                            <path d="M 35 40 L 50 55 L 65 40" stroke="currentColor" stroke-width="3" fill="none"/>
+                        </svg>
+                    </div>
+                    <h3>NaturalLanguage Framework</h3>
+                    <p>Uses Apple's NaturalLanguage for accurate syllable counting and linguistic analysis.</p>
+                </div>
+                <div class="feature-card" data-aos="fade-up" data-aos-delay="500">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M 20 50 L 50 20 L 80 50 L 50 80 Z" fill="none" stroke="currentColor" stroke-width="3"/>
+                            <circle cx="50" cy="50" r="8" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <h3>Ollama Integration</h3>
+                    <p>Powered by local LLM (llama3.2:3b) for privacy-focused, high-quality text generation.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section id="demo" class="demo">
+        <div class="container">
+            <h2 class="section-title">See It In Action</h2>
+            <div class="demo-container">
+                <div class="demo-input">
+                    <h3>Original Lyrics</h3>
+                    <textarea id="originalLyrics" placeholder="Enter your lyrics here...">I want you to stay
+'Til I'm in the grave
+'Til I rot away, dead and buried
+'Til I'm in the casket you carry</textarea>
+                </div>
+                <div class="demo-arrow">
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M 20 50 L 80 50 M 70 40 L 80 50 L 70 60" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="demo-output">
+                    <h3>Generated Parody</h3>
+                    <div id="parodyOutput" class="parody-output">
+                        <p class="placeholder">Click "Generate Parody" to see the magic!</p>
+                    </div>
+                    <button id="generateBtn" class="btn btn-primary">
+                        <span>Generate Parody</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Installation Section -->
+    <section id="installation" class="installation">
+        <div class="container">
+            <h2 class="section-title">Quick Start</h2>
+            <div class="install-steps">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <h3>Clone the Repository</h3>
+                    <div class="code-block">
+                        <code>git clone https://github.com/shyamalschandra/Yankovinator-swift.git</code>
+                        <button class="copy-btn" data-copy="git clone https://github.com/shyamalschandra/Yankovinator-swift.git">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <h3>Build the Project</h3>
+                    <div class="code-block">
+                        <code>cd Yankovinator-swift && swift build</code>
+                        <button class="copy-btn" data-copy="cd Yankovinator-swift && swift build">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <h3>Set Up Ollama</h3>
+                    <div class="code-block">
+                        <code>ollama pull llama3.2:3b</code>
+                        <button class="copy-btn" data-copy="ollama pull llama3.2:3b">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">4</div>
+                    <h3>Generate Your First Parody</h3>
+                    <div class="code-block">
+                        <code>swift run yankovinator lyrics.txt --keywords themes.txt</code>
+                        <button class="copy-btn" data-copy="swift run yankovinator lyrics.txt --keywords themes.txt">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Yankovinator</h4>
+                    <p>AI-powered parody generator with perfect syllable matching and artistic style.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="https://github.com/shyamalschandra/Yankovinator-swift">GitHub Repository</a></li>
+                        <li><a href="https://github.com/shyamalschandra/Yankovinator-swift/blob/main/README.md">Documentation</a></li>
+                        <li><a href="https://ollama.ai">Ollama</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Copyright</h4>
+                    <p>&copy; 2025 Shyamal Suhana Chandra</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
