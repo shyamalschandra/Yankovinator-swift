@@ -189,6 +189,17 @@ The parody generation process:
     \item Return complete parody
 \end{enumerate}
 
+\subsection{Text Processing and Grammar}
+
+Yankovinator includes sophisticated text processing to ensure grammatically correct output:
+
+\begin{itemize}
+    \item \textbf{Contraction Preservation}: Apostrophes in contractions (e.g., "don't", "can't", "it's", "won't") are preserved during text cleaning, ensuring natural and grammatically correct poetry
+    \item \textbf{Quote Handling}: Only wrapping quotes are removed from generated text, while internal punctuation and apostrophes are maintained
+    \item \textbf{Syllable Counting with Contractions}: The syllable counter properly handles contractions by tokenizing them as single words, then removing punctuation for accurate syllable counting
+    \item \textbf{Prompt Engineering}: Generation prompts explicitly encourage the use of proper contractions when appropriate for natural speech patterns
+\end{itemize}
+
 \section{Testing}
 
 The project includes comprehensive tests using XCTest:

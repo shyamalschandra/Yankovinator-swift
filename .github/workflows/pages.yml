@@ -9,6 +9,7 @@ on:
       - '.github/workflows/pages.yml'
       - 'package.json'
       - 'tsconfig.json'
+      - 'docs/*.tex'
   workflow_dispatch:
 
 permissions:
@@ -41,6 +42,22 @@ jobs:
 
       - name: Build TypeScript
         run: npm run build
+
+      - name: Build LaTeX Documents
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: docs/yankovinator.tex
+          latexmk_use_xelatex: false
+          args: -pdf -file-line-error -halt-on-error -interaction=nonstopmode
+          working_directory: docs
+
+      - name: Build Presentation PDF
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: docs/presentation.tex
+          latexmk_use_xelatex: false
+          args: -pdf -file-line-error -halt-on-error -interaction=nonstopmode
+          working_directory: docs
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

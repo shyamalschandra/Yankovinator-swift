@@ -407,6 +407,59 @@ section {
     line-height: 1.8;
 }
 
+/* Documentation Section */
+.documentation {
+    padding: 6rem 2rem;
+    background: var(--dark-surface);
+}
+
+.docs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.doc-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 2.5rem;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    text-align: center;
+}
+
+.doc-card:hover {
+    transform: translateY(-10px);
+    box-shadow: var(--shadow-lg);
+    border-color: rgba(102, 126, 234, 0.5);
+}
+
+.doc-icon {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 1.5rem;
+    color: #667eea;
+}
+
+.doc-card h3 {
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.doc-card p {
+    color: var(--text-secondary);
+    line-height: 1.8;
+    margin-bottom: 2rem;
+}
+
+.doc-card .btn {
+    margin-top: 1rem;
+}
+
 /* Demo Section */
 .demo {
     background: var(--dark-surface);
