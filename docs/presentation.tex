@@ -66,9 +66,17 @@
 \frametitle{How It Works}
 \begin{enumerate}
     \item Analyze original song's syllable structure
+    \item Detect rhyming scheme automatically
     \item Extract theme keywords and definitions
-    \item Generate each line matching syllable count
-    \item Maintain rhythm and style
+    \item Generate each line with:
+    \begin{itemize}
+        \item Exact syllable matching (word-by-word)
+        \item Rhyming constraints
+        \item Semantic coherence with previous lines
+        \item Theme advancement
+    \end{itemize}
+    \item Refine for semantic coherence
+    \item Maintain rhythm, style, and meaning
 \end{enumerate}
 
 \begin{lstlisting}
@@ -116,9 +124,12 @@ stars: luminous celestial bodies
 \frametitle{Features}
 \begin{itemize}
     \item \checkmark Syllable-accurate parody generation
-    \item \checkmark Theme-based keyword integration
+    \item \checkmark Word-by-word syllable matching
+    \item \checkmark Automatic rhyme detection and enforcement
+    \item \checkmark Semantic coherence across lines
+    \item \checkmark Theme advancement (not just mention)
     \item \checkmark NaturalLanguage framework integration
-    \item \checkmark Ollama LLM support
+    \item \checkmark Ollama LLM support (llama3.2:3b)
     \item \checkmark Command-line interface
     \item \checkmark Comprehensive testing
     \item \checkmark Proper grammar with contractions
@@ -185,13 +196,16 @@ Run: \texttt{swift test}
 \frametitle{Algorithm Flow}
 \begin{enumerate}
     \item Parse input lyrics
-    \item Analyze syllable structure
+    \item Analyze syllable structure (total and word-by-word)
+    \item Detect rhyming scheme
     \item Load theme keywords
     \item For each line:
     \begin{itemize}
-        \item Build prompt with constraints
-        \item Request from Ollama
+        \item Build prompt with constraints and context
+        \item Request from Ollama with previous lines
         \item Validate syllable count
+        \item Refine word-by-word matching
+        \item Refine semantic coherence
         \item Clean and format
     \end{itemize}
     \item Return complete parody
@@ -203,9 +217,24 @@ Run: \texttt{swift test}
 \begin{itemize}
     \item Maintains original rhythm
     \item Creative theme integration
-    \item Accurate syllable matching
+    \item Accurate syllable matching (word-by-word)
+    \item Semantic coherence across lines
+    \item Automatic rhyme detection
+    \item Theme advancement (not just mention)
     \item Easy to use API
     \item Extensible architecture
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Semantic Coherence}
+\begin{itemize}
+    \item Context-aware generation (8 previous lines)
+    \item Theme advancement (not just mention)
+    \item Narrative flow maintenance
+    \item Consistent imagery and metaphors
+    \item Logical progression
+    \item Dedicated semantic refinement pass
 \end{itemize}
 \end{frame}
 
@@ -217,6 +246,7 @@ Run: \texttt{swift test}
     \item Batch processing
     \item Web interface
     \item Advanced theme analysis
+    \item Multi-language support
 \end{itemize}
 \end{frame}
 

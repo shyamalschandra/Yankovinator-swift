@@ -94,13 +94,15 @@ public class ParodyGenerator {
             let wordSyllablePattern = wordSyllables.map { "\($0.word)(\($0.syllables))" }.joined(separator: " ")
             
             // Generate parody line matching syllable count and rhyming requirements
+            // Use more context lines (up to 8) for better semantic coherence
+            let contextLines = Array(parodyLines.suffix(8).filter { !$0.isEmpty })
             var parodyLine: String
             do {
                 parodyLine = try await ollamaClient.generateParodyLine(
                     originalLine: originalLine,
                     syllableCount: syllableCount,
                     keywords: keywords,
-                    previousLines: Array(parodyLines.suffix(3).filter { !$0.isEmpty }), // Last 3 non-empty lines for context
+                    previousLines: contextLines, // More context for semantic coherence
                     rhymeGroup: currentRhymeGroup,
                     rhymingLines: rhymingLines,
                     rhymeScheme: rhymeScheme,
@@ -121,11 +123,18 @@ public class ParodyGenerator {
                 throw OllamaError.networkError(error)
             }
             
-            // Refinement passes for word-by-word syllable matching and punctuation correction
+            // Refinement passes for word-by-word syllable matching, semantic coherence, and punctuation correction
+            // Always run semantic coherence if we have previous lines (unless it's the first line)
+            let shouldRunSemanticCoherence = !contextLines.isEmpty && nonEmptyIndex > 1
+            
+            // Track which refinement types we've done
+            var hasDoneWordSyllableRefinement = false
+            var hasDoneSemanticRefinement = false
+            
             for pass in 1...refinementPasses {
                 do {
-                    // First pass: verify and refine word-by-word syllable matching
-                    if pass == 1 {
+                    // First pass: verify and refine word-by-word syllable matching with semantic coherence
+                    if pass == 1 && !hasDoneWordSyllableRefinement {
                         parodyLine = try await refineWordSyllableMatching(
                             line: parodyLine,
                             originalLine: originalLine,
@@ -134,8 +143,24 @@ public class ParodyGenerator {
                             wordSyllables: wordSyllables.map { $0.syllables },
                             rhymeGroup: currentRhymeGroup,
                             rhymingLines: rhymingLines,
-                            rhymeScheme: rhymeScheme
+                            rhymeScheme: rhymeScheme,
+                            previousLines: contextLines
                         )
+                        hasDoneWordSyllableRefinement = true
+                    } else if shouldRunSemanticCoherence && !hasDoneSemanticRefinement {
+                        // Semantic coherence refinement - prioritize this for theme advancement
+                        parodyLine = try await refineSemanticCoherence(
+                            line: parodyLine,
+                            originalLine: originalLine,
+                            syllableCount: syllableCount,
+                            keywords: keywords,
+                            previousLines: contextLines,
+                            rhymeGroup: currentRhymeGroup,
+                            rhymingLines: rhymingLines,
+                            rhymeScheme: rhymeScheme,
+                            wordSyllables: wordSyllables.map { $0.syllables }
+                        )
+                        hasDoneSemanticRefinement = true
                     } else {
                         // Subsequent passes: punctuation correction
                         parodyLine = try await refineLinePunctuation(
@@ -156,6 +181,27 @@ public class ParodyGenerator {
                 }
             }
             
+            // If we haven't run semantic coherence yet and we should, run it now
+            if shouldRunSemanticCoherence && !hasDoneSemanticRefinement {
+                do {
+                    parodyLine = try await refineSemanticCoherence(
+                        line: parodyLine,
+                        originalLine: originalLine,
+                        syllableCount: syllableCount,
+                        keywords: keywords,
+                        previousLines: contextLines,
+                        rhymeGroup: currentRhymeGroup,
+                        rhymingLines: rhymingLines,
+                        rhymeScheme: rhymeScheme,
+                        wordSyllables: wordSyllables.map { $0.syllables }
+                    )
+                } catch {
+                    if verbose {
+                        print("Warning: Semantic coherence refinement failed for line \(index + 1), using current line")
+                    }
+                }
+            }
+            
             parodyLines.append(parodyLine)
             nonEmptyParodyLines.append(parodyLine) // Track for rhyming
         }
@@ -172,7 +218,8 @@ public class ParodyGenerator {
         wordSyllables: [Int],
         rhymeGroup: String,
         rhymingLines: [String],
-        rhymeScheme: String
+        rhymeScheme: String,
+        previousLines: [String] = []
     ) async throws -> String {
         // Analyze the generated line's word syllables
         let generatedWordSyllables = syllableCounter.analyzeWordSyllables(in: line)
@@ -206,8 +253,20 @@ public class ParodyGenerator {
             rhymingInfo = "\nLines that must rhyme with this: \(rhymingLines.joined(separator: ", "))"
         }
         
+        var semanticContext = ""
+        if !previousLines.isEmpty {
+            semanticContext = """
+            
+            SEMANTIC COHERENCE:
+            - The line must semantically connect with previous lines: \(previousLines.joined(separator: " | "))
+            - Build upon the theme and narrative established so far
+            - Ensure the line contributes meaningfully to the overall story/theme
+            - Maintain logical flow and progression from previous lines
+            """
+        }
+        
         let prompt = """
-        Refine this parody line to match the EXACT word-by-word syllable pattern of the original.
+        Refine this parody line to match the EXACT word-by-word syllable pattern of the original while maintaining semantic coherence.
         
         Original line: "\(originalLine)"
         Required syllable pattern (one number per word): \(wordPattern)
@@ -217,14 +276,15 @@ public class ParodyGenerator {
         Requirements:
         1. Each word must have the EXACT SAME number of syllables as the corresponding word in the original
         2. Total syllables: \(syllableCount)
-        3. Theme: \(keywordDescriptions)
+        3. Theme: \(keywordDescriptions) - STRONGLY EMBRACE and ADVANCE this theme in the line's meaning
         4. Rhyme group: \(rhymeGroup) in \(rhymeScheme) scheme\(rhymingInfo)
         5. The line must make COGENT SENSE and have ARTISTIC STYLE that AMAZES
         6. Use vivid imagery, clever wordplay, and evocative language
         7. The line should flow naturally like professional song lyrics
         8. Use proper contractions with apostrophes (e.g., "don't", "can't", "it's", "won't") when appropriate for natural speech
+        9. SEMANTICALLY ADVANCE THE THEME: Make the theme keywords integral to the line's meaning\(semanticContext)
         
-        Generate a refined line that matches the syllable pattern EXACTLY while maintaining meaning, style, and quality.
+        Generate a refined line that matches the syllable pattern EXACTLY while maintaining semantic coherence, meaning, style, and quality.
         Return ONLY the refined line, nothing else:
         """
         
@@ -245,6 +305,115 @@ public class ParodyGenerator {
         let refinedSyllables = syllableCounter.countSyllablesInLine(refined)
         if abs(refinedSyllables - syllableCount) > 2 {
             // If refinement changed syllable count too much, use original
+            return line
+        }
+        
+        return refined
+    }
+    
+    /// Refine semantic coherence to ensure the line works with previous lines and advances the theme
+    private func refineSemanticCoherence(
+        line: String,
+        originalLine: String,
+        syllableCount: Int,
+        keywords: [String: String],
+        previousLines: [String],
+        rhymeGroup: String,
+        rhymingLines: [String],
+        rhymeScheme: String,
+        wordSyllables: [Int]
+    ) async throws -> String {
+        // If no previous lines, skip semantic refinement
+        guard !previousLines.isEmpty else {
+            return line
+        }
+        
+        // Analyze word-by-word syllable structure to maintain constraints
+        let wordSyllablePattern = wordSyllables.map { String($0) }.joined(separator: "-")
+        
+        // Request semantic coherence refinement from Ollama
+        let keywordDescriptions = keywords.map { "\($0.key): \($0.value)" }.joined(separator: ", ")
+        
+        var rhymingInfo = ""
+        if !rhymingLines.isEmpty {
+            rhymingInfo = "\nLines that must rhyme with this: \(rhymingLines.joined(separator: ", "))"
+        }
+        
+        let prompt = """
+        Refine this parody line to ensure STRONG SEMANTIC COHERENCE with previous lines while maintaining all constraints.
+        
+        Theme keywords: \(keywordDescriptions)
+        Original line: "\(originalLine)"
+        Current line: "\(line)"
+        Required syllable pattern (one number per word): \(wordSyllablePattern)
+        Total syllables: \(syllableCount)
+        Rhyme group: \(rhymeGroup) in \(rhymeScheme) scheme\(rhymingInfo)
+        
+        Previous lines for semantic context:
+        \(previousLines.enumerated().map { "\($0.offset + 1). \($0.element)" }.joined(separator: "\n"))
+        
+        CRITICAL REQUIREMENTS:
+        1. The line must SEMANTICALLY CONNECT and BUILD UPON the previous lines
+        2. Maintain the EXACT syllable pattern: \(wordSyllablePattern) (one number per word position)
+        3. STRONGLY EMBRACE and ADVANCE the theme: \(keywordDescriptions)
+           - Make the theme keywords integral to the line's meaning
+           - Use imagery, metaphors, and concepts that develop the theme
+           - Push the theme forward, don't just mention it
+        4. Ensure the line contributes meaningfully to the overall narrative/story
+        5. Maintain logical flow and progression from previous lines
+        6. Use consistent imagery, metaphors, and thematic elements
+        7. The line must make COGENT SENSE in context
+        8. Maintain artistic style with vivid imagery and clever wordplay
+        9. Preserve rhyme requirements
+        10. Use proper contractions when appropriate
+        
+        Generate a refined line that:
+        - Maintains the exact syllable pattern
+        - Strongly advances the theme semantically
+        - Connects meaningfully with previous lines
+        - Contributes to the overall narrative arc
+        
+        Return ONLY the refined line, nothing else:
+        """
+        
+        let refined = try await ollamaClient.generateParodyLine(
+            originalLine: originalLine,
+            syllableCount: syllableCount,
+            keywords: keywords,
+            previousLines: previousLines,
+            customPrompt: prompt,
+            rhymeGroup: rhymeGroup,
+            rhymingLines: rhymingLines,
+            rhymeScheme: rhymeScheme,
+            wordSyllablePattern: nil,
+            wordSyllables: wordSyllables
+        )
+        
+        // Validate the refined line has correct syllable count
+        let refinedSyllables = syllableCounter.countSyllablesInLine(refined)
+        if abs(refinedSyllables - syllableCount) > 2 {
+            // If refinement changed syllable count too much, use original
+            return line
+        }
+        
+        // Validate word-by-word syllable matching is still correct
+        let refinedWordSyllables = syllableCounter.analyzeWordSyllables(in: refined)
+        let refinedSyllableCounts = refinedWordSyllables.map { $0.syllables }
+        
+        if refinedSyllableCounts.count == wordSyllables.count {
+            var matches = true
+            for (refinedCount, requiredCount) in zip(refinedSyllableCounts, wordSyllables) {
+                if refinedCount != requiredCount {
+                    matches = false
+                    break
+                }
+            }
+            if !matches {
+                // If word-by-word matching is broken, use original
+                return line
+            }
+        } else {
+            // If word count changed, use original
             return line
         }
         

@@ -95,12 +95,33 @@ public class OllamaClient {
         if let customPrompt = customPrompt {
             prompt = customPrompt
         } else {
+            // Build enhanced context with semantic coherence emphasis
+            var semanticContext = ""
+            if !previousLines.isEmpty {
+                semanticContext = """
+                
+                SEMANTIC COHERENCE REQUIREMENTS:
+                - The line must SEMANTICALLY CONNECT with the previous lines above
+                - Build upon the narrative, theme, and emotional arc established so far
+                - Use consistent imagery, metaphors, and thematic elements throughout
+                - Ensure the line contributes meaningfully to the overall story/theme
+                - Maintain logical flow and progression from previous lines
+                - If previous lines establish a scene, emotion, or concept, continue or develop it naturally
+                
+                Previous lines for context:
+                \(previousLines.enumerated().map { "\($0.offset + 1). \($0.element)" }.joined(separator: "\n"))
+                """
+            }
+            
             prompt = """
             You are an exceptional creative parody writer crafting lyrics that amaze with artistic brilliance.
             Generate a single line of parody poetry that:
             
             1. Has exactly \(syllableCount) syllables total\(wordSyllableInstructions)
-            2. Follows the theme of these keywords: \(keywordDescriptions)
+            2. STRONGLY EMBRACES and ADVANCES the theme of these keywords: \(keywordDescriptions)
+               - Weave the theme keywords naturally into the line's meaning
+               - Use imagery, metaphors, and concepts related to the theme
+               - Make the theme central to the line's semantic content, not just mentioned
             3. Maintains the rhythm and style of the original: "\(originalLine)"
             4. Preserves punctuation style similar to the original
             5. Is creative, humorous, and appropriate\(rhymingInstructions)
@@ -112,6 +133,8 @@ public class OllamaClient {
             - The line should flow naturally and sound like it belongs in a professional song
             - Avoid awkward phrasing or forced rhymes - prioritize natural, beautiful language
             - Use proper contractions with apostrophes (e.g., "don't", "can't", "it's", "won't") when appropriate for natural speech
+            - SEMANTICALLY ADVANCE THE THEME: The line should push forward the chosen theme, not just mention it
+            - THEME INTEGRATION: Make the theme keywords feel integral to the line's meaning, not forced or superficial\(semanticContext)
             
             \(context)Generate ONLY the parody line, nothing else. No explanations, no quotes, just the line:
             """

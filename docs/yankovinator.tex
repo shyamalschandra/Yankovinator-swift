@@ -134,17 +134,26 @@ Analyzes syllable structure of a complete song.
 
 \subsection{ParodyGenerator}
 
-\subsubsection{generateParody(originalLyrics:keywords:progressCallback:)}
-Generates a parody matching the original song's structure.
+\subsubsection{generateParody(originalLyrics:keywords:progressCallback:refinementPasses:verbose:)}
+Generates a parody matching the original song's structure with semantic coherence.
 
 \textbf{Parameters:}
 \begin{itemize}
     \item \texttt{originalLyrics: [String]} - Original song lines
     \item \texttt{keywords: [String: String]} - Theme keywords and definitions
     \item \texttt{progressCallback: ((Int, Int) -> Void)?} - Optional progress callback
+    \item \texttt{refinementPasses: Int} - Number of refinement passes (default: 2)
+    \item \texttt{verbose: Bool} - Whether to print verbose messages
 \end{itemize}
 
-\textbf{Returns:} \texttt{[String]} - Generated parody lines
+\textbf{Returns:} \texttt{[String]} - Generated parody lines with semantic coherence
+
+\textbf{Refinement Process:}
+\begin{enumerate}
+    \item Word-by-word syllable matching refinement
+    \item Semantic coherence refinement (ensures lines work together thematically)
+    \item Punctuation correction to match original style
+\end{enumerate}
 
 \subsection{Yankovinator}
 
@@ -171,7 +180,20 @@ The syllable counting algorithm uses a combination of:
     \item NaturalLanguage tokenization for word separation
     \item Vowel counting heuristics
     \item Special case handling for silent 'e' and 'le' endings
+    \item Word-by-word syllable analysis for precise matching
 \end{enumerate}
+
+\subsection{Rhyme Detection}
+
+Yankovinator automatically detects rhyming schemes from original lyrics:
+
+\begin{itemize}
+    \item Extracts last words from each line using NaturalLanguage tokenization
+    \item Compares phonetic patterns using vowel sequences and consonant patterns
+    \item Groups lines by rhyming patterns (A, B, C, etc.)
+    \item Enforces rhyming constraints during generation
+    \item Supports common rhyme schemes: ABAB, AABB, AAAA, etc.
+\end{itemize}
 
 \subsection{Parody Generation}
 
@@ -179,15 +201,40 @@ The parody generation process:
 
 \begin{enumerate}
     \item Analyze original song's syllable structure
+    \item Detect rhyming scheme from original lyrics
     \item For each line:
         \begin{enumerate}
-            \item Extract syllable count requirement
-            \item Build prompt with theme keywords
-            \item Request generation from Ollama
+            \item Extract syllable count requirement (total and word-by-word)
+            \item Determine rhyming constraints based on detected scheme
+            \item Build prompt with theme keywords and semantic context
+            \item Request generation from Ollama with previous lines for coherence
             \item Validate and clean response
+            \item Refine word-by-word syllable matching
+            \item Refine semantic coherence with previous lines
+            \item Correct punctuation to match original style
         \end{enumerate}
     \item Return complete parody
 \end{enumerate}
+
+\subsection{Semantic Coherence}
+
+Yankovinator employs advanced semantic coherence techniques to ensure generated lyrics work together meaningfully:
+
+\begin{itemize}
+    \item \textbf{Context Awareness}: Each line generation considers up to 8 previous lines for narrative continuity
+    \item \textbf{Theme Advancement}: Lines are generated to actively advance the chosen theme, not just mention keywords
+    \item \textbf{Semantic Refinement}: A dedicated refinement pass ensures each line semantically connects with previous lines
+    \item \textbf{Narrative Flow}: The system maintains logical progression and consistent imagery throughout the parody
+    \item \textbf{Theme Integration}: Keywords are woven naturally into the semantic content of each line
+\end{itemize}
+
+The semantic coherence system uses Ollama's language understanding to:
+\begin{itemize}
+    \item Build upon established narrative, theme, and emotional arcs
+    \item Use consistent imagery, metaphors, and thematic elements
+    \item Ensure each line contributes meaningfully to the overall story
+    \item Maintain logical flow and progression from previous lines
+\end{itemize}
 
 \subsection{Text Processing and Grammar}
 

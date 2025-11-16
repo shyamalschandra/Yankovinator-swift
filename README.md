@@ -10,11 +10,14 @@ Yankovinator is a Swift-based application that converts songs into parodies usin
 
 ## Features
 
-- ✅ Syllable-accurate parody generation
+- ✅ Syllable-accurate parody generation (word-by-word matching)
+- ✅ Automatic rhyme detection and enforcement
+- ✅ Semantic coherence across lines (context-aware generation)
+- ✅ Theme advancement (not just mention, but actively develop themes)
 - ✅ Theme-based keyword integration
 - ✅ Automatic keyword generation from subjects using Ollama
 - ✅ NaturalLanguage framework integration (Swift 6.3+)
-- ✅ Ollama LLM support
+- ✅ Ollama LLM support (llama3.2:3b)
 - ✅ Command-line interface
 - ✅ Comprehensive testing with XCTest
 - ✅ Full documentation (LaTeX/Beamer)
@@ -252,13 +255,26 @@ The syllable counting algorithm uses:
 
 ### Parody Generation
 
-1. Analyze original song's syllable structure
-2. For each line:
-   - Extract syllable count requirement
-   - Build prompt with theme keywords
-   - Request generation from Ollama
+1. Analyze original song's syllable structure (total and word-by-word)
+2. Detect rhyming scheme automatically
+3. For each line:
+   - Extract syllable count requirement (total and word-by-word)
+   - Determine rhyming constraints
+   - Build prompt with theme keywords and semantic context
+   - Request generation from Ollama with previous lines for coherence
    - Validate and clean response
-3. Return complete parody
+   - Refine word-by-word syllable matching
+   - Refine semantic coherence with previous lines
+   - Correct punctuation to match original style
+4. Return complete parody
+
+### Semantic Coherence
+
+Yankovinator employs advanced semantic coherence techniques:
+- **Context Awareness**: Each line considers up to 8 previous lines for narrative continuity
+- **Theme Advancement**: Lines actively advance the chosen theme, not just mention keywords
+- **Semantic Refinement**: Dedicated refinement pass ensures lines work together thematically
+- **Narrative Flow**: Maintains logical progression and consistent imagery throughout
 
 ## Troubleshooting
 
