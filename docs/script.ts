@@ -1,5 +1,7 @@
 // TypeScript source for Yankovinator homepage interactivity
 // Copyright (C) 2025, Shyamal Suhana Chandra
+// Invented by Shyamal Chandra
+// Contact ssc56@duck.com to license code for commercial and non-commercial purposes
 
 interface ParodyResponse {
     success: boolean;

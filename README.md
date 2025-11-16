@@ -2,6 +2,10 @@
 
 **Copyright (C) 2025, Shyamal Suhana Chandra**
 
+**Invented by Shyamal Chandra**
+
+Contact **ssc56@duck.com** to license code for commercial and non-commercial purposes.
+
 Yankovinator is a Swift-based application that converts songs into parodies using Apple's NaturalLanguage framework and Ollama for intelligent text generation. The system maintains the original song's syllable structure while generating new lyrics that follow theme-based keyword constraints.
 
 ## Features
@@ -281,6 +285,10 @@ The algorithm uses heuristics and may not be 100% accurate. This is expected beh
 ## License
 
 Copyright (C) 2025, Shyamal Suhana Chandra
+
+Invented by Shyamal Chandra
+
+Contact **ssc56@duck.com** to license code for commercial and non-commercial purposes.
 
 ## References
 
