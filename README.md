@@ -14,6 +14,7 @@ Yankovinator is a Swift-based application that converts songs into parodies usin
 - ✅ Automatic rhyme detection and enforcement
 - ✅ Semantic coherence across lines (context-aware generation)
 - ✅ Theme advancement (not just mention, but actively develop themes)
+- ✅ Capitalization and punctuation matching (exact style preservation)
 - ✅ Theme-based keyword integration
 - ✅ Automatic keyword generation from subjects using Ollama
 - ✅ NaturalLanguage framework integration (Swift 6.3+)

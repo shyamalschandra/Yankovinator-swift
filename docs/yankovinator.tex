@@ -152,7 +152,7 @@ Generates a parody matching the original song's structure with semantic coherenc
 \begin{enumerate}
     \item Word-by-word syllable matching refinement
     \item Semantic coherence refinement (ensures lines work together thematically)
-    \item Punctuation correction to match original style
+    \item Capitalization and punctuation matching to match original style exactly
 \end{enumerate}
 
 \subsection{Yankovinator}
@@ -211,7 +211,7 @@ The parody generation process:
             \item Validate and clean response
             \item Refine word-by-word syllable matching
             \item Refine semantic coherence with previous lines
-            \item Correct punctuation to match original style
+            \item Apply capitalization and punctuation to match original style exactly
         \end{enumerate}
     \item Return complete parody
 \end{enumerate}
@@ -246,6 +246,28 @@ Yankovinator includes sophisticated text processing to ensure grammatically corr
     \item \textbf{Syllable Counting with Contractions}: The syllable counter properly handles contractions by tokenizing them as single words, then removing punctuation for accurate syllable counting
     \item \textbf{Prompt Engineering}: Generation prompts explicitly encourage the use of proper contractions when appropriate for natural speech patterns
 \end{itemize}
+
+\subsection{Capitalization and Punctuation Matching}
+
+Yankovinator ensures that generated parodies match the exact capitalization and punctuation style of the original song:
+
+\begin{itemize}
+    \item \textbf{Capitalization Pattern Extraction}: The system analyzes which words in the original line are capitalized and which are lowercase
+    \item \textbf{Punctuation Preservation}: All punctuation marks (commas, periods, apostrophes, quotes, etc.) are extracted and preserved in their exact positions
+    \item \textbf{Pattern Application}: After generation and refinement, the capitalization and punctuation patterns from the original line are automatically applied to the generated line
+    \item \textbf{Word-by-Word Matching}: Each word in the generated line receives the same capitalization treatment as the corresponding word in the original line
+    \item \textbf{Spacing Preservation}: The exact spacing and punctuation placement between words is maintained
+\end{itemize}
+
+The capitalization and punctuation matching process:
+\begin{enumerate}
+    \item Extract capitalization pattern from original line (which words are uppercase/lowercase)
+    \item Extract punctuation pattern (all punctuation marks and their positions)
+    \item Generate parody line with semantic coherence and syllable matching
+    \item Apply capitalization pattern word-by-word to generated line
+    \item Apply punctuation pattern to match original exactly
+    \item Validate final output matches original style
+\end{enumerate}
 
 \section{Testing}
 

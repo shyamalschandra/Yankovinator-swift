@@ -202,6 +202,12 @@ public class ParodyGenerator {
                 }
             }
             
+            // Apply capitalization and punctuation matching from original line
+            parodyLine = applyCapitalizationAndPunctuation(
+                to: parodyLine,
+                from: originalLine
+            )
+            
             parodyLines.append(parodyLine)
             nonEmptyParodyLines.append(parodyLine) // Track for rhyming
         }
@@ -420,7 +426,7 @@ public class ParodyGenerator {
         return refined
     }
     
-    /// Refine line punctuation to match original style
+    /// Refine line punctuation and capitalization to match original style
     private func refineLinePunctuation(
         line: String,
         originalLine: String,
@@ -428,34 +434,47 @@ public class ParodyGenerator {
         keywords: [String: String],
         pass: Int
     ) async throws -> String {
-        // Extract punctuation from original line
+        // Extract punctuation and capitalization patterns from original line
         let originalPunctuation = extractPunctuation(from: originalLine)
+        let originalCapitalization = extractCapitalizationPattern(from: originalLine)
         
-        // If original has no special punctuation, return as is
-        if originalPunctuation.isEmpty {
-            return line
-        }
-        
-        // Only refine if there's a significant punctuation difference
+        // Extract patterns from current line
         let linePunctuation = extractPunctuation(from: line)
-        if originalPunctuation == linePunctuation {
+        let lineCapitalization = extractCapitalizationPattern(from: line)
+        
+        // Check if patterns already match
+        let punctuationMatches = originalPunctuation == linePunctuation || originalPunctuation.isEmpty
+        let capitalizationMatches = originalCapitalization == lineCapitalization
+        
+        if punctuationMatches && capitalizationMatches {
             return line // Already matches
         }
+        
+        // Build capitalization pattern description
+        let capPattern = originalCapitalization.map { $0 ? "U" : "L" }.joined(separator: "-")
         
         // Request refinement from Ollama
         let keywordDescriptions = keywords.map { "\($0.key): \($0.value)" }.joined(separator: ", ")
         
+        var patternDescription = ""
+        if !punctuationMatches {
+            patternDescription += "Punctuation pattern: \(originalPunctuation)\n"
+        }
+        if !capitalizationMatches {
+            patternDescription += "Capitalization pattern (U=uppercase, L=lowercase per word): \(capPattern)\n"
+        }
+        
         let prompt = """
-        Refine this parody line to match the punctuation style of the original.
+        Refine this parody line to match the EXACT punctuation and capitalization style of the original.
         Keep exactly \(syllableCount) syllables.
         Maintain the theme: \(keywordDescriptions)
         
         Original line: "\(originalLine)"
-        Original punctuation pattern: \(originalPunctuation)
-        
+        \(patternDescription)
         Current parody line: "\(line)"
         
-        Refine ONLY the punctuation to match the original style. Keep the same words and meaning.
+        CRITICAL: Match the EXACT capitalization (which words are uppercase/lowercase) and punctuation of the original line.
+        Keep the same words and meaning, but adjust capitalization and punctuation to match exactly.
         Use proper contractions with apostrophes (e.g., "don't", "can't", "it's", "won't") when appropriate.
         Return ONLY the refined line, nothing else:
         """
@@ -475,13 +494,141 @@ public class ParodyGenerator {
             return line
         }
         
-        return refined
+        // Apply capitalization and punctuation programmatically as a fallback
+        let finalRefined = applyCapitalizationAndPunctuation(to: refined, from: originalLine)
+        
+        return finalRefined
     }
     
     /// Extract punctuation pattern from a line
     private func extractPunctuation(from line: String) -> String {
         let punctuation = line.filter { ".,!?;:'\"-()[]{}".contains($0) }
         return punctuation.isEmpty ? "" : "Contains: \(punctuation)"
+    }
+    
+    /// Extract capitalization pattern from a line
+    /// Returns an array of booleans indicating which words should be capitalized
+    private func extractCapitalizationPattern(from line: String) -> [Bool] {
+        let tokenizer = NLTokenizer(unit: .word)
+        tokenizer.string = line
+        
+        var capitalizationPattern: [Bool] = []
+        tokenizer.enumerateTokens(in: line.startIndex..<line.endIndex) { tokenRange, _ in
+            let word = String(line[tokenRange])
+            // Check if the first character is uppercase (ignoring punctuation)
+            let firstChar = word.first { $0.isLetter }
+            if let char = firstChar {
+                capitalizationPattern.append(char.isUppercase)
+            } else {
+                // If no letter found, default to false (lowercase)
+                capitalizationPattern.append(false)
+            }
+            return true
+        }
+        
+        return capitalizationPattern
+    }
+    
+    /// Apply capitalization and punctuation pattern from original line to generated line
+    private func applyCapitalizationAndPunctuation(to generatedLine: String, from originalLine: String) -> String {
+        // Extract word tokens from both lines
+        let originalTokenizer = NLTokenizer(unit: .word)
+        originalTokenizer.string = originalLine
+        
+        let generatedTokenizer = NLTokenizer(unit: .word)
+        generatedTokenizer.string = generatedLine
+        
+        // Get original words with their capitalization and following punctuation/spacing
+        var originalWords: [(word: String, isCapitalized: Bool, afterWord: String)] = []
+        
+        originalTokenizer.enumerateTokens(in: originalLine.startIndex..<originalLine.endIndex) { tokenRange, _ in
+            let word = String(originalLine[tokenRange])
+            
+            // Get everything after this word until the next word starts
+            let afterWordEnd = tokenRange.upperBound
+            var nextWordStart = originalLine.endIndex
+            
+            // Find the start of the next word by looking ahead
+            if afterWordEnd < originalLine.endIndex {
+                // Use enumerateTokens to find the next token
+                var foundNext = false
+                originalTokenizer.enumerateTokens(in: afterWordEnd..<originalLine.endIndex) { nextTokenRange, _ in
+                    nextWordStart = nextTokenRange.lowerBound
+                    foundNext = true
+                    return false // Stop after first token
+                }
+                if !foundNext {
+                    nextWordStart = originalLine.endIndex
+                }
+            }
+            
+            // Extract everything between this word and the next (spaces, punctuation, etc.)
+            var afterWord = ""
+            if nextWordStart > afterWordEnd {
+                afterWord = String(originalLine[afterWordEnd..<nextWordStart])
+            } else if afterWordEnd < originalLine.endIndex {
+                // This is the last word, get everything after it
+                afterWord = String(originalLine[afterWordEnd...])
+            }
+            
+            // Check capitalization (first letter of the word)
+            let firstChar = word.first { $0.isLetter }
+            let isCapitalized = firstChar?.isUppercase ?? false
+            
+            originalWords.append((word: word, isCapitalized: isCapitalized, afterWord: afterWord))
+            return true
+        }
+        
+        // Get generated words
+        var generatedWords: [String] = []
+        generatedTokenizer.enumerateTokens(in: generatedLine.startIndex..<generatedLine.endIndex) { tokenRange, _ in
+            let word = String(generatedLine[tokenRange])
+            generatedWords.append(word)
+            return true
+        }
+        
+        // Apply capitalization and punctuation pattern
+        var result = ""
+        let minCount = min(originalWords.count, generatedWords.count)
+        
+        for i in 0..<minCount {
+            var word = generatedWords[i]
+            
+            // Apply capitalization
+            if originalWords[i].isCapitalized {
+                // Capitalize first letter
+                if let firstLetterIndex = word.firstIndex(where: { $0.isLetter }) {
+                    let firstLetter = word[firstLetterIndex]
+                    let capitalized = String(firstLetter.uppercased())
+                    word.replaceSubrange(firstLetterIndex...firstLetterIndex, with: capitalized)
+                }
+            } else {
+                // Lowercase first letter
+                if let firstLetterIndex = word.firstIndex(where: { $0.isLetter }) {
+                    let firstLetter = word[firstLetterIndex]
+                    let lowercased = String(firstLetter.lowercased())
+                    word.replaceSubrange(firstLetterIndex...firstLetterIndex, with: lowercased)
+                }
+            }
+            
+            result += word
+            result += originalWords[i].afterWord
+        }
+        
+        // If there are more generated words, add them with default spacing
+        if generatedWords.count > minCount {
+            for i in minCount..<generatedWords.count {
+                if i == minCount && result.last?.isWhitespace == false {
+                    result += " "
+                }
+                result += generatedWords[i]
+                if i < generatedWords.count - 1 {
+                    result += " "
+                }
+            }
+        }
+        
+        return result
     }
     
     /// Extract keywords and definitions from text using NaturalLanguage
