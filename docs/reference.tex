@@ -1,0 +1,802 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{longtable}
+\usepackage{booktabs}
+\geometry{margin=1in}
+
+\title{Yankovinator: Reference Manual\\
+\large API Documentation and Usage Guide}
+\author{Shyamal Suhana Chandra}
+\date{Copyright \textcopyright{} 2025}
+
+\lstset{
+    language=Swift,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    stringstyle=\color{red},
+    commentstyle=\color{green!60!black},
+    numbers=left,
+    numberstyle=\tiny,
+    stepnumber=1,
+    numbersep=5pt,
+    frame=single,
+    breaklines=true,
+    showstringspaces=false
+}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+\newpage
+
+\section{Introduction}
+
+This reference manual provides comprehensive documentation for the Yankovinator Swift library. Yankovinator is a parody generation system that converts songs into parodies while maintaining syllable structure, rhyming schemes, and semantic coherence.
+
+\section{Overview}
+
+Yankovinator consists of several key components:
+\begin{itemize}
+    \item \texttt{Yankovinator} - Main library interface
+    \item \texttt{ParodyGenerator} - Core parody generation engine
+    \item \texttt{OllamaClient} - Interface to Ollama LLM API
+    \item \texttt{SyllableCounter} - Syllable counting utilities
+    \item \texttt{RhymeSchemeAnalyzer} - Rhyme detection and analysis
+\end{itemize}
+
+\section{Yankovinator}
+
+The main entry point for the Yankovinator library.
+
+\subsection{generateParody(originalLyrics:keywords:ollamaURL:ollamaModel:)}
+
+Main function to generate a parody from original lyrics.
+
+\textbf{Signature:}
+\begin{lstlisting}
+public static func generateParody(
+    originalLyrics: [String],
+    keywords: [String: String],
+    ollamaURL: String = "http://localhost:11434",
+    ollamaModel: String = "llama3.2:3b"
+) async throws -> [String]
+\end{lstlisting}
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{originalLyrics: [String]} - Array of original song lines (one line per element)
+    \item \texttt{keywords: [String: String]} - Dictionary mapping theme keywords to their definitions
+    \item \texttt{ollamaURL: String} - Base URL for Ollama API (default: \texttt{"http://localhost:11434"})
+    \item \texttt{ollamaModel: String} - Ollama model name (default: \texttt{"llama3.2:3b"})
+\end{itemize}
+
+\textbf{Returns:} \texttt{[String]} - Array of generated parody lines matching the original structure
+
+\textbf{Throws:} Various errors including network errors, model not found errors, and generation errors
+
+\textbf{Example:}
+\begin{lstlisting}
+let lyrics = [
+    "Twinkle twinkle little star",
+    "How I wonder what you are"
+]
+
+let keywords = [
+    "space": "the physical universe beyond Earth",
+    "stars": "luminous celestial bodies"
+]
+
+let parody = try await Yankovinator.generateParody(
+    originalLyrics: lyrics,
+    keywords: keywords
+)
+\end{lstlisting}
+
+\subsection{countSyllables(\_:)}
+
+Count syllables in a text string.
+
+\textbf{Signature:}
+\begin{lstlisting}
+public static func countSyllables(_ text: String) -> Int
+\end{lstlisting}
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{text: String} - Text to analyze
+\end{itemize}
+
+\textbf{Returns:} \texttt{Int} - Total syllable count
+
+\textbf{Example:}
+\begin{lstlisting}
+let count = Yankovinator.countSyllables("Hello world")
+// Returns: 2
+\end{lstlisting}
+
+\subsection{analyzeStructure(\_:)}
+
+Analyze syllable structure of a complete song.
+
+\textbf{Signature:}
+\begin{lstlisting}
+public static func analyzeStructure(_ lyrics: [String]) -> [Int]
+\end{lstlisting}
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{lyrics: [String]} - Array of lyric lines
+\end{itemize}
+
+\textbf{Returns:} \texttt{[Int]} - Array of syllable counts per line
+
+\textbf{Example:}
+\begin{lstlisting}
+let lyrics = ["Hello world", "How are you"]
+let structure = Yankovinator.analyzeStructure(lyrics)
+// Returns: [2, 3]
+\end{lstlisting}
+
+\section{ParodyGenerator}
+
+The core parody generation engine that orchestrates the conversion process.
+
+\subsection{Initialization}
+
+\textbf{Signature:}
+\begin{lstlisting}
+public init(
+    ollamaBaseURL: String = "http://localhost:11434",
+    ollamaModel: String = "llama3.2:3b"
+)
+\end{lstlisting}
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{ollamaBaseURL: String} - Base URL for Ollama API
+    \item \texttt{ollamaModel: String} - Model name to use
+\end{itemize}
+
+\textbf{Example:}
+\begin{lstlisting}
+let generator = ParodyGenerator(
+    ollamaBaseURL: "http://localhost:11434",
+    ollamaModel: "llama3.2:3b"
+)
+\end{lstlisting}
+
+\subsection{generateParody(originalLyrics:keywords:progressCallback:refinementPasses:verbose:)}
+
+Generate a parody matching the original song's structure.
+
+\textbf{Signature:}
+\begin{lstlisting}
+public func generateParody(
+    originalLyrics: [String],
+    keywords: [String: String],
+    progressCallback: ((Int, Int) -> Void)? = nil,
+    refinementPasses: Int = 2,
+    verbose: Bool = false
+) async throws -> [String]
+\end{lstlisting}
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{originalLyrics: [String]} - Array of original song lines
+    \item \texttt{keywords: [String: String]} - Theme keywords and definitions
+    \item \texttt{progressCallback: ((Int, Int) -> Void)?} - Optional callback for progress updates (current line, total lines)
+    \item \texttt{refinementPasses: Int} - Number of refinement passes (default: 2)
+    \item \texttt{verbose: Bool} - Whether to print verbose messages (default: false)
+\end{itemize}
+
+\textbf{Returns:} \texttt{[String]} - Generated parody lines with preserved empty lines
+
+\textbf{Throws:} \texttt{OllamaError} and other errors during generation
+
+\textbf{Example:}
+\begin{lstlisting}
+let generator = ParodyGenerator()
+let parody = try await generator.generateParody(
+    originalLyrics: lyrics,
+    keywords: keywords,
+    progressCallback: { current, total in
+        print("Progress: \(current)/\(total)")
+    },
+    refinementPasses: 2,
+    verbose: true
+)
+\end{lstlisting}
+
+\subsection{extractKeywords(from:)}
+
+Extract keywords and definitions from text.
+
+\textbf{Signature:}
+\begin{lstlisting}
+public func extractKeywords(from text: String) -> [String: String]
+\end{lstlisting}
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{text: String} - Text containing keywords in format \texttt{"keyword: definition"}
+\end{itemize}
+
+\textbf{Returns:} \texttt{[String: String]} - Dictionary of keywords and their definitions
+
+\textbf{Example:}
+\begin{lstlisting}
+let text = """
+space: the physical universe beyond Earth
+stars: luminous celestial bodies
+"""
+let keywords = generator.extractKeywords(from: text)
+\end{lstlisting}
+
+\subsection{validateOllamaConnection()}
+
+Validate that Ollama is available and model exists.
+
+\textbf{Signature:}
+\begin{lstlisting}
+public func validateOllamaConnection() async throws -> Bool
+\end{lstlisting}
+
+\textbf{Returns:} \texttt{Bool} - True if Ollama is reachable and model is available
+
+\textbf{Throws:} \texttt{OllamaError} if connection fails
+
+\textbf{Example:}
+\begin{lstlisting}
+let isValid = try await generator.validateOllamaConnection()
+if !isValid {
+    print("Ollama connection failed")
+}
+\end{lstlisting}
+
+\subsection{verifyModel()}
+
+Verify model is available before generation.
+
+\textbf{Signature:}
+\begin{lstlisting}
+public func verifyModel() async throws
+\end{lstlisting}
+
+\textbf{Throws:} \texttt{OllamaError.modelNotFound} if model is not available
+
+\textbf{Example:}
+\begin{lstlisting}
+try await generator.verifyModel()
+\end{lstlisting}
+
+\section{OllamaClient}
+
+Client for interacting with the Ollama API.
+
+\subsection{Initialization}
+
+\textbf{Signature:}
+\begin{lstlisting}
+public init(
+    baseURL: String = "http://localhost:11434",
+    model: String = "llama3.2:3b"
+)
+\end{lstlisting}
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{baseURL: String} - Base URL for Ollama API
+    \item \texttt{model: String} - Model name to use
+\end{itemize}
+
+\subsection{generateParodyLine(originalLine:syllableCount:keywords:previousLines:customPrompt:rhymeGroup:rhymingLines:rhymeScheme:wordSyllablePattern:wordSyllables:)}
+
+Generate a single parody line matching constraints.
+
+\textbf{Signature:}
+\begin{lstlisting}
+public func generateParodyLine(
+    originalLine: String,
+    syllableCount: Int,
+    keywords: [String: String],
+    previousLines: [String] = [],
+    customPrompt: String? = nil,
+    rhymeGroup: String? = nil,
+    rhymingLines: [String] = [],
+    rhymeScheme: String? = nil,
+    wordSyllablePattern: String? = nil,
+    wordSyllables: [Int]? = nil
+) async throws -> String
+\end{lstlisting}
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{originalLine: String} - Original song line
+    \item \texttt{syllableCount: Int} - Target syllable count
+    \item \texttt{keywords: [String: String]} - Theme keywords and definitions
+    \item \texttt{previousLines: [String]} - Previous lines for context (default: empty)
+    \item \texttt{customPrompt: String?} - Optional custom prompt (default: nil)
+    \item \texttt{rhymeGroup: String?} - Rhyme group identifier (A, B, C, etc.)
+    \item \texttt{rhymingLines: [String]} - Lines that should rhyme with this one
+    \item \texttt{rhymeScheme: String?} - Overall rhyme scheme pattern (e.g., "ABAB")
+    \item \texttt{wordSyllablePattern: String?} - Pattern showing word-by-word syllable counts
+    \item \texttt{wordSyllables: [Int]?} - Array of syllable counts per word position
+\end{itemize}
+
+\textbf{Returns:} \texttt{String} - Generated parody line
+
+\textbf{Throws:} \texttt{OllamaError} for various error conditions
+
+\subsection{checkAvailability()}
+
+Check if Ollama is available and model exists.
+
+\textbf{Signature:}
+\begin{lstlisting}
+public func checkAvailability() async throws -> Bool
+\end{lstlisting}
+
+\textbf{Returns:} \texttt{Bool} - True if Ollama is reachable and model is available
+
+\subsection{verifyModel()}
+
+Verify model exists and is available.
+
+\textbf{Signature:}
+\begin{lstlisting}
+public func verifyModel() async throws
+\end{lstlisting}
+
+\textbf{Throws:} \texttt{OllamaError.modelNotFound} if model is not available
+
+\subsection{generateKeywords(from:count:)}
+
+Generate keywords with definitions from subjects.
+
+\textbf{Signature:}
+\begin{lstlisting}
+public func generateKeywords(
+    from subjects: [String],
+    count: Int = 10
+) async throws -> [String: String]
+\end{lstlisting}
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{subjects: [String]} - Array of subjects or topics
+    \item \texttt{count: Int} - Number of keyword pairs to generate (default: 10, max: 100)
+\end{itemize}
+
+\textbf{Returns:} \texttt{[String: String]} - Dictionary mapping keywords to definitions
+
+\textbf{Example:}
+\begin{lstlisting}
+let keywords = try await client.generateKeywords(
+    from: ["artificial intelligence", "machine learning"],
+    count: 15
+)
+\end{lstlisting}
+
+\section{SyllableCounter}
+
+Utility for counting syllables in words and lines.
+
+\subsection{countSyllables(in:)}
+
+Count syllables in a single word.
+
+\textbf{Signature:}
+\begin{lstlisting}
+public static func countSyllables(in word: String) -> Int
+\end{lstlisting}
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{word: String} - The word to analyze
+\end{itemize}
+
+\textbf{Returns:} \texttt{Int} - Number of syllables
+
+\textbf{Example:}
+\begin{lstlisting}
+let count = SyllableCounter.countSyllables(in: "hello")
+// Returns: 2
+\end{lstlisting}
+
+\subsection{countSyllablesInLine(\_:)}
+
+Count total syllables in a line of text.
+
+\textbf{Signature:}
+\begin{lstlisting}
+public static func countSyllablesInLine(_ line: String) -> Int
+\end{lstlisting}
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{line: String} - The line of text
+\end{itemize}
+
+\textbf{Returns:} \texttt{Int} - Total syllable count
+
+\textbf{Example:}
+\begin{lstlisting}
+let count = SyllableCounter.countSyllablesInLine("Hello world")
+// Returns: 2
+\end{lstlisting}
+
+\subsection{analyzeSongStructure(\_:)}
+
+Analyze syllable structure of a complete song.
+
+\textbf{Signature:}
+\begin{lstlisting}
+public static func analyzeSongStructure(_ lyrics: [String]) -> [Int]
+\end{lstlisting}
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{lyrics: [String]} - Array of lyric lines
+\end{itemize}
+
+\textbf{Returns:} \texttt{[Int]} - Array of syllable counts per line
+
+\subsection{analyzeWordSyllables(in:)}
+
+Analyze word-by-word syllable structure of a line.
+
+\textbf{Signature:}
+\begin{lstlisting}
+public static func analyzeWordSyllables(in line: String) -> [(word: String, syllables: Int)]
+\end{lstlisting}
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{line: String} - The line of text
+\end{itemize}
+
+\textbf{Returns:} \texttt{[(word: String, syllables: Int)]} - Array of tuples with word and syllable count
+
+\textbf{Example:}
+\begin{lstlisting}
+let analysis = SyllableCounter.analyzeWordSyllables(in: "Hello world")
+// Returns: [("Hello", 2), ("world", 1)]
+\end{lstlisting}
+
+\section{RhymeSchemeAnalyzer}
+
+Utility for detecting and analyzing rhyming schemes.
+
+\subsection{detectRhymeScheme(from:)}
+
+Detect rhyming scheme from lyrics.
+
+\textbf{Signature:}
+\begin{lstlisting}
+public static func detectRhymeScheme(from lyrics: [String]) -> (rhymeGroups: [String], scheme: String)
+\end{lstlisting}
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{lyrics: [String]} - Array of lyric lines (non-empty lines only)
+\end{itemize}
+
+\textbf{Returns:} \texttt{(rhymeGroups: [String], scheme: String)} - Tuple with rhyme groups and scheme pattern
+
+\textbf{Example:}
+\begin{lstlisting}
+let lyrics = [
+    "Twinkle twinkle little star",
+    "How I wonder what you are",
+    "Up above the world so high",
+    "Like a diamond in the sky"
+]
+let (groups, scheme) = RhymeSchemeAnalyzer.detectRhymeScheme(from: lyrics)
+// Returns: (["A", "A", "B", "B"], "AABB")
+\end{lstlisting}
+
+\subsection{getRhymeGroup(for:in:)}
+
+Determine the rhyme group for a line position.
+
+\textbf{Signature:}
+\begin{lstlisting}
+public static func getRhymeGroup(
+    for index: Int,
+    in rhymeGroups: [String]
+) -> String
+\end{lstlisting}
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{index: Int} - Line index (0-based)
+    \item \texttt{rhymeGroups: [String]} - Array of rhyme group identifiers
+\end{itemize}
+
+\textbf{Returns:} \texttt{String} - The rhyme group identifier for this line
+
+\subsection{getRhymingLineIndices(for:in:)}
+
+Get all line indices that should rhyme with the given line.
+
+\textbf{Signature:}
+\begin{lstlisting}
+public static func getRhymingLineIndices(
+    for index: Int,
+    in rhymeGroups: [String]
+) -> [Int]
+\end{lstlisting}
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{index: Int} - Current line index
+    \item \texttt{rhymeGroups: [String]} - Array of rhyme group identifiers
+\end{itemize}
+
+\textbf{Returns:} \texttt{[Int]} - Array of indices that should rhyme with this line
+
+\section{Error Handling}
+
+\subsection{OllamaError}
+
+Enumeration of errors that can occur when interacting with Ollama.
+
+\textbf{Cases:}
+\begin{itemize}
+    \item \texttt{invalidURL} - Invalid Ollama URL
+    \item \texttt{httpError(statusCode:message:)} - HTTP error with status code and message
+    \item \texttt{invalidResponse} - Invalid response from Ollama API
+    \item \texttt{networkError(Error)} - Network-level error
+    \item \texttt{modelNotFound(model:)} - Model not found error
+\end{itemize}
+
+\textbf{Example:}
+\begin{lstlisting}
+do {
+    let parody = try await Yankovinator.generateParody(
+        originalLyrics: lyrics,
+        keywords: keywords
+    )
+} catch OllamaError.modelNotFound(let model) {
+    print("Model \(model) not found. Please install it.")
+} catch OllamaError.networkError(let error) {
+    print("Network error: \(error.localizedDescription)")
+} catch {
+    print("Unexpected error: \(error)")
+}
+\end{lstlisting}
+
+\section{Usage Patterns}
+
+\subsection{Basic Usage}
+
+The simplest way to generate a parody:
+
+\begin{lstlisting}
+let lyrics = ["Line 1", "Line 2", "Line 3"]
+let keywords = ["theme": "definition"]
+
+let parody = try await Yankovinator.generateParody(
+    originalLyrics: lyrics,
+    keywords: keywords
+)
+\end{lstlisting}
+
+\subsection{With Progress Tracking}
+
+Track generation progress:
+
+\begin{lstlisting}
+let generator = ParodyGenerator()
+let parody = try await generator.generateParody(
+    originalLyrics: lyrics,
+    keywords: keywords,
+    progressCallback: { current, total in
+        let percentage = Double(current) / Double(total) * 100
+        print("Progress: \(Int(percentage))%")
+    }
+)
+\end{lstlisting}
+
+\subsection{With Custom Ollama Configuration}
+
+Use a custom Ollama instance:
+
+\begin{lstlisting}
+let parody = try await Yankovinator.generateParody(
+    originalLyrics: lyrics,
+    keywords: keywords,
+    ollamaURL: "http://192.168.1.100:11434",
+    ollamaModel: "llama3.2:3b"
+)
+\end{lstlisting}
+
+\subsection{Error Handling Best Practices}
+
+Always handle errors appropriately:
+
+\begin{lstlisting}
+do {
+    // Verify connection first
+    let generator = ParodyGenerator()
+    try await generator.verifyModel()
+    
+    // Generate parody
+    let parody = try await generator.generateParody(
+        originalLyrics: lyrics,
+        keywords: keywords
+    )
+    
+    // Process results
+    for line in parody {
+        print(line)
+    }
+} catch OllamaError.modelNotFound(let model) {
+    print("Error: Model '\(model)' not found.")
+    print("Install it with: ollama pull \(model)")
+} catch OllamaError.networkError(let error) {
+    print("Network error: \(error.localizedDescription)")
+    print("Ensure Ollama is running: ollama serve")
+} catch {
+    print("Unexpected error: \(error.localizedDescription)")
+}
+\end{lstlisting}
+
+\section{Configuration}
+
+\subsection{Refinement Passes}
+
+Control the number of refinement passes:
+
+\begin{lstlisting}
+let generator = ParodyGenerator()
+let parody = try await generator.generateParody(
+    originalLyrics: lyrics,
+    keywords: keywords,
+    refinementPasses: 3  // More passes = better quality, slower
+)
+\end{lstlisting}
+
+\textbf{Default:} 2 passes
+\begin{itemize}
+    \item Pass 1: Word-by-word syllable matching
+    \item Pass 2: Semantic coherence refinement
+    \item Pass 3+: Punctuation and capitalization matching
+\end{itemize}
+
+\subsection{Verbose Mode}
+
+Enable verbose output for debugging:
+
+\begin{lstlisting}
+let generator = ParodyGenerator()
+let parody = try await generator.generateParody(
+    originalLyrics: lyrics,
+    keywords: keywords,
+    verbose: true  // Prints detailed progress information
+)
+\end{lstlisting}
+
+\section{Best Practices}
+
+\subsection{Keyword Selection}
+
+\begin{itemize}
+    \item Use specific, meaningful keywords related to your theme
+    \item Provide clear definitions for each keyword
+    \item Use 5-15 keywords for best results
+    \item Ensure keywords are relevant to the desired theme
+\end{itemize}
+
+\subsection{Input Format}
+
+\begin{itemize}
+    \item One line per verse in the lyrics array
+    \item Preserve empty lines to maintain song structure
+    \item Use consistent formatting
+    \item Include punctuation in original lyrics for better matching
+\end{itemize}
+
+\subsection{Performance}
+
+\begin{itemize}
+    \item Use appropriate refinement passes (2-3 is usually sufficient)
+    \item Monitor progress with callbacks for long songs
+    \item Cache keywords if generating multiple parodies with same theme
+    \item Verify Ollama connection before batch processing
+\end{itemize}
+
+\section{Examples}
+
+\subsection{Complete Example}
+
+\begin{lstlisting}
+import Yankovinator
+
+// Prepare input
+let originalLyrics = [
+    "I want you to stay",
+    "'Til I'm in the grave",
+    "'Til I rot away, dead and buried",
+    "'Til I'm in the casket you carry"
+]
+
+let keywords = [
+    "love": "deep affection and attachment",
+    "eternity": "infinite or unending time",
+    "commitment": "dedication to a cause or relationship"
+]
+
+// Generate parody
+do {
+    let parody = try await Yankovinator.generateParody(
+        originalLyrics: originalLyrics,
+        keywords: keywords
+    )
+    
+    // Output results
+    for line in parody {
+        print(line)
+    }
+} catch {
+    print("Error: \(error)")
+}
+\end{lstlisting}
+
+\subsection{With Keyword Generation}
+
+\begin{lstlisting}
+let generator = ParodyGenerator()
+let client = OllamaClient()
+
+// Generate keywords from subjects
+let keywords = try await client.generateKeywords(
+    from: ["space exploration", "NASA", "astronomy"],
+    count: 10
+)
+
+// Use generated keywords
+let parody = try await generator.generateParody(
+    originalLyrics: lyrics,
+    keywords: keywords
+)
+\end{lstlisting}
+
+\section{Appendix: Type Definitions}
+
+\subsection{Type Aliases}
+
+None currently defined.
+
+\subsection{Protocols}
+
+None currently defined.
+
+\section{Version History}
+
+\begin{itemize}
+    \item \textbf{v1.0} - Initial release with basic parody generation
+    \item \textbf{v1.1} - Added semantic coherence features
+    \item \textbf{v1.2} - Added capitalization and punctuation matching
+\end{itemize}
+
+\section{License}
+
+Copyright \textcopyright{} 2025, Shyamal Suhana Chandra
+
+Invented by Shyamal Chandra
+
+Contact \texttt{ssc56@duck.com} to license code for commercial and non-commercial purposes.
+
+\end{document}

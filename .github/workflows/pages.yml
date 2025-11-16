@@ -61,6 +61,14 @@ jobs:
           args: -pdf -file-line-error -halt-on-error -interaction=nonstopmode
           working_directory: docs
 
+      - name: Build LaTeX Reference Manual
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: docs/reference.tex
+          latexmk_use_xelatex: false
+          args: -pdf -file-line-error -halt-on-error -interaction=nonstopmode
+          working_directory: docs
+
       - name: Verify PDFs exist
         run: |
           if [ ! -f docs/yankovinator.pdf ]; then
@@ -69,6 +77,10 @@ jobs:
           fi
           if [ ! -f docs/presentation.pdf ]; then
             echo "Error: presentation.pdf not found"
+            exit 1
+          fi
+          if [ ! -f docs/reference.pdf ]; then
+            echo "Error: reference.pdf not found"
             exit 1
           fi
           echo "✓ PDFs built successfully"

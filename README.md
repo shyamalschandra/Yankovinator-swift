@@ -228,6 +228,22 @@ cd docs
 pdflatex presentation.tex
 ```
 
+### Reference Manual
+
+Generate API reference manual:
+
+```bash
+cd docs
+pdflatex reference.tex
+```
+
+The reference manual provides comprehensive API documentation including:
+- Function signatures and parameters
+- Return types and error handling
+- Usage examples and best practices
+- Configuration options
+- Complete type definitions
+
 ## Architecture
 
 ### Core Components
