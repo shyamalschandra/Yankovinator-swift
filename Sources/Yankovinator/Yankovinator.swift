@@ -6,6 +6,7 @@ import NaturalLanguage
 
 /// Yankovinator: Convert songs into parodies with theme-based keyword constraints
 /// Uses NaturalLanguage framework and Apple's Foundation Models for intelligent parody generation
+@available(macOS 15.0, iOS 18.0, *)
 public struct Yankovinator {
     
     /// Generate a parody from original lyrics
