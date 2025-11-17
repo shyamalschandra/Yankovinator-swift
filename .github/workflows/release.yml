@@ -35,13 +35,18 @@ jobs:
           # Find built executables
           YANKO_BIN=$(find .build -name "yankovinator" -type f | head -1)
           KEYWORD_BIN=$(find .build -name "keyword-generator" -type f | head -1)
+          BENCHMARK_BIN=$(find .build -name "benchmark" -type f | head -1)
           if [ -z "$YANKO_BIN" ] || [ -z "$KEYWORD_BIN" ]; then
             echo "Error: Could not find built binaries"
-            find .build -type f -name "*yankovinator*" -o -name "*keyword*" | head -10
+            find .build -type f -name "*yankovinator*" -o -name "*keyword*" -o -name "*benchmark*" | head -10
             exit 1
           fi
           cp "$YANKO_BIN" dist/arm64/yankovinator
           cp "$KEYWORD_BIN" dist/arm64/keyword-generator
+          if [ -n "$BENCHMARK_BIN" ]; then
+            cp "$BENCHMARK_BIN" dist/arm64/benchmark
+            chmod +x dist/arm64/benchmark
+          fi
           chmod +x dist/arm64/yankovinator dist/arm64/keyword-generator
           file dist/arm64/yankovinator
       
@@ -55,9 +60,14 @@ jobs:
           # Find built executables
           YANKO_BIN=$(find .build -name "yankovinator" -type f | head -1)
           KEYWORD_BIN=$(find .build -name "keyword-generator" -type f | head -1)
+          BENCHMARK_BIN=$(find .build -name "benchmark" -type f | head -1)
           if [ -n "$YANKO_BIN" ] && [ -n "$KEYWORD_BIN" ]; then
             cp "$YANKO_BIN" dist/x86_64/yankovinator
             cp "$KEYWORD_BIN" dist/x86_64/keyword-generator
+            if [ -n "$BENCHMARK_BIN" ]; then
+              cp "$BENCHMARK_BIN" dist/x86_64/benchmark
+              chmod +x dist/x86_64/benchmark
+            fi
             chmod +x dist/x86_64/yankovinator dist/x86_64/keyword-generator
             file dist/x86_64/yankovinator
           else
@@ -118,11 +128,26 @@ jobs:
               dist/x86_64/keyword-generator \
               dist/arm64/keyword-generator \
               -output dist/universal/keyword-generator
+            # Create universal benchmark if available
+            if [ -f dist/x86_64/benchmark ] && [ -f dist/arm64/benchmark ]; then
+              lipo -create \
+                dist/x86_64/benchmark \
+                dist/arm64/benchmark \
+                -output dist/universal/benchmark
+              chmod +x dist/universal/benchmark
+            elif [ -f dist/arm64/benchmark ]; then
+              cp dist/arm64/benchmark dist/universal/benchmark
+              chmod +x dist/universal/benchmark
+            fi
           else
             # If x86_64 build failed, use arm64 as universal (works via Rosetta)
             echo "x86_64 build not available, using arm64 binary (works on Intel via Rosetta)"
             cp dist/arm64/yankovinator dist/universal/yankovinator
             cp dist/arm64/keyword-generator dist/universal/keyword-generator
+            if [ -f dist/arm64/benchmark ]; then
+              cp dist/arm64/benchmark dist/universal/benchmark
+              chmod +x dist/universal/benchmark
+            fi
           fi
           
           chmod +x dist/universal/yankovinator dist/universal/keyword-generator
@@ -138,12 +163,24 @@ jobs:
       - name: Create archives
         run: |
           cd dist/universal
-          tar -czf ../yankovinator-universal.tar.gz yankovinator keyword-generator
+          if [ -f benchmark ]; then
+            tar -czf ../yankovinator-universal.tar.gz yankovinator keyword-generator benchmark
+          else
+            tar -czf ../yankovinator-universal.tar.gz yankovinator keyword-generator
+          fi
           cd ../arm64
-          tar -czf ../yankovinator-arm64.tar.gz yankovinator keyword-generator
+          if [ -f benchmark ]; then
+            tar -czf ../yankovinator-arm64.tar.gz yankovinator keyword-generator benchmark
+          else
+            tar -czf ../yankovinator-arm64.tar.gz yankovinator keyword-generator
+          fi
           if [ -f ../x86_64/yankovinator ]; then
             cd ../x86_64
-            tar -czf ../yankovinator-x86_64.tar.gz yankovinator keyword-generator
+            if [ -f benchmark ]; then
+              tar -czf ../yankovinator-x86_64.tar.gz yankovinator keyword-generator benchmark
+            else
+              tar -czf ../yankovinator-x86_64.tar.gz yankovinator keyword-generator
+            fi
           fi
           cd ../..
       
