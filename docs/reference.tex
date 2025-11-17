@@ -577,6 +577,51 @@ do {
 }
 \end{lstlisting}
 
+\section{Installation}
+
+\subsection{Homebrew Installation (Recommended)}
+
+The easiest way to install Yankovinator-swift is using Homebrew:
+
+\begin{lstlisting}
+# Add the tap
+brew tap shyamalschandra/yankovinator-swift
+
+# Install Yankovinator-swift
+brew install yankovinator-swift
+
+# Verify installation
+yankovinator --help
+keyword-generator --help
+\end{lstlisting}
+
+The Homebrew formula automatically handles all Swift Package Manager dependencies and builds the package in release mode.
+
+\subsection{Build from Source}
+
+For development or if you prefer building from source:
+
+\begin{lstlisting}
+# Clone repository
+git clone https://github.com/shyamalschandra/Yankovinator-swift.git
+cd Yankovinator-swift
+
+# Build
+swift build
+
+# Run CLI
+swift run yankovinator --help
+\end{lstlisting}
+
+\subsection{Requirements}
+
+\begin{itemize}
+    \item Swift 6.2 or later
+    \item macOS 13+ or iOS 16+
+    \item Ollama installed and running
+    \item Model: llama3.2:3b (install with \texttt{ollama pull llama3.2:3b})
+\end{itemize}
+
 \section{Usage Patterns}
 
 \subsection{Basic Usage}

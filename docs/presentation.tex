@@ -175,12 +175,20 @@ Run: \texttt{swift test}
 
 \begin{frame}
 \frametitle{Installation}
+\textbf{Homebrew (Recommended):}
+\begin{enumerate}
+    \item \texttt{brew tap shyamalschandra/yankovinator-swift}
+    \item \texttt{brew install yankovinator-swift}
+    \item Start Ollama: \texttt{ollama serve}
+    \item Pull model: \texttt{ollama pull llama3.2:3b}
+    \item Run: \texttt{yankovinator lyrics.txt}
+\end{enumerate}
+
+\textbf{From Source:}
 \begin{enumerate}
     \item Clone repository
     \item \texttt{swift build}
-    \item Start Ollama: \texttt{ollama serve}
-    \item Pull model: \texttt{ollama pull llama3.2}
-    \item Run: \texttt{swift run yankovinator}
+    \item \texttt{swift run yankovinator}
 \end{enumerate}
 \end{frame}
 

@@ -32,27 +32,49 @@ Yankovinator is a Swift-based application that converts songs into parodies usin
 
 ## Installation
 
-### 1. Clone the repository
+### Homebrew (Recommended)
+
+The easiest way to install Yankovinator-swift is using Homebrew:
 
 ```bash
-git clone <repository-url>
+# Add the tap
+brew tap shyamalschandra/yankovinator-swift
+
+# Install Yankovinator-swift
+brew install yankovinator-swift
+
+# Verify installation
+yankovinator --help
+keyword-generator --help
+```
+
+The Homebrew formula automatically handles all dependencies and builds the package in release mode.
+
+### Build from Source
+
+For development or if you prefer building from source:
+
+#### 1. Clone the repository
+
+```bash
+git clone https://github.com/shyamalschandra/Yankovinator-swift.git
 cd Yankovinator-swift
 ```
 
-### 2. Build the project
+#### 2. Build the project
 
 ```bash
 swift build
 ```
 
-### 3. Set up Ollama
+#### 3. Set up Ollama
 
 ```bash
 # Start Ollama (if not already running)
 ollama serve
 
 # Pull the required model
-ollama pull llama3.2
+ollama pull llama3.2:3b
 ```
 
 ## Usage
