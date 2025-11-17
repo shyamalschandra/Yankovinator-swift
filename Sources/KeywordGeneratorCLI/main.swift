@@ -99,13 +99,13 @@ struct KeywordGeneratorCLI: AsyncParsableCommand {
         }
         
         // Create Foundation Models client
+        guard #available(macOS 15.0, iOS 18.0, *) else {
+            throw ValidationError("Foundation Models requires macOS 15+ or iOS 18+")
+        }
+        
         let client: FoundationModelsClient
         do {
-            if #available(macOS 15.0, iOS 18.0, *) {
-                client = try FoundationModelsClient(modelIdentifier: modelIdentifier)
-            } else {
-                throw FoundationModelsError.modelUnavailable
-            }
+            client = try FoundationModelsClient(modelIdentifier: modelIdentifier)
         } catch let error as FoundationModelsError {
             throw ValidationError("""
             \(error.description)
