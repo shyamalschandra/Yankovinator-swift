@@ -160,8 +160,12 @@ struct YankovinatorCLI: AsyncParsableCommand {
                 throw ValidationError("Could not read keywords file: \(keywordsFile)")
             }
             
-            let generator = try ParodyGenerator(modelIdentifier: modelIdentifier)
-            keywordsDict = generator.extractKeywords(from: keywordsContent)
+            if #available(macOS 15.0, iOS 18.0, *) {
+                let generator = try ParodyGenerator(modelIdentifier: modelIdentifier)
+                keywordsDict = generator.extractKeywords(from: keywordsContent)
+            } else {
+                throw ValidationError("Foundation Models requires macOS 15+ or iOS 18+")
+            }
             
             if verbose {
                 print("Loaded \(keywordsDict.count) keywords:")
@@ -184,7 +188,11 @@ struct YankovinatorCLI: AsyncParsableCommand {
         
         let generator: ParodyGenerator
         do {
-            generator = try ParodyGenerator(modelIdentifier: modelIdentifier)
+            if #available(macOS 15.0, iOS 18.0, *) {
+                generator = try ParodyGenerator(modelIdentifier: modelIdentifier)
+            } else {
+                throw FoundationModelsError.modelUnavailable
+            }
         } catch let error as FoundationModelsError {
             throw ValidationError("""
             \(error.description)

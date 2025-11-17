@@ -56,8 +56,12 @@ struct BenchmarkCLI: AsyncParsableCommand {
                 throw ValidationError("Could not read keywords file: \(keywordsFile)")
             }
             
-            let generator = try ParodyGenerator()
-            keywordsDict = generator.extractKeywords(from: keywordsContent)
+            if #available(macOS 15.0, iOS 18.0, *) {
+                let generator = try ParodyGenerator()
+                keywordsDict = generator.extractKeywords(from: keywordsContent)
+            } else {
+                throw ValidationError("Foundation Models requires macOS 15+ or iOS 18+")
+            }
         } else {
             keywordsDict = ["parody": "humorous imitation", "creative": "original and imaginative"]
         }

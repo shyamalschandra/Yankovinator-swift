@@ -101,7 +101,11 @@ struct KeywordGeneratorCLI: AsyncParsableCommand {
         // Create Foundation Models client
         let client: FoundationModelsClient
         do {
-            client = try FoundationModelsClient(modelIdentifier: modelIdentifier)
+            if #available(macOS 15.0, iOS 18.0, *) {
+                client = try FoundationModelsClient(modelIdentifier: modelIdentifier)
+            } else {
+                throw FoundationModelsError.modelUnavailable
+            }
         } catch let error as FoundationModelsError {
             throw ValidationError("""
             \(error.description)
