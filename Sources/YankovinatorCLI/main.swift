@@ -186,13 +186,13 @@ struct YankovinatorCLI: AsyncParsableCommand {
             print("Checking Foundation Models availability...")
         }
         
+        guard #available(macOS 15.0, iOS 18.0, *) else {
+            throw ValidationError("Foundation Models requires macOS 15+ or iOS 18+")
+        }
+        
         let generator: ParodyGenerator
         do {
-            if #available(macOS 15.0, iOS 18.0, *) {
-                generator = try ParodyGenerator(modelIdentifier: modelIdentifier)
-            } else {
-                throw FoundationModelsError.modelUnavailable
-            }
+            generator = try ParodyGenerator(modelIdentifier: modelIdentifier)
         } catch let error as FoundationModelsError {
             throw ValidationError("""
             \(error.description)
