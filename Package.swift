@@ -1,4 +1,4 @@
-// swift-tools-version: 6.2
+// swift-tools-version: 5.10
 // Copyright (C) 2025, Shyamal Suhana Chandra
 // The tools used to build, test, and package the Yankovinator software.
 
