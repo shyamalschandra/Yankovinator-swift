@@ -7,8 +7,8 @@ import PackageDescription
 let package = Package(
     name: "Yankovinator",
     platforms: [
-        .macOS(.v15),  // FoundationModels requires macOS 15+ (Sequoia)
-        .iOS(.v18)     // FoundationModels requires iOS 18+
+        .macOS(.v14),  // Build target (runtime requires macOS 15.0+ for Foundation Models)
+        .iOS(.v17)     // Build target (runtime requires iOS 18.0+ for Foundation Models)
     ],
     products: [
         .library(
