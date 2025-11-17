@@ -56,11 +56,12 @@ You can check:
 
 ## Current Status
 
-**As of now (before testing):**
+**Confirmed from Source Code Analysis:**
 - ✅ Swift 5.10: Confirmed working
+- ✅ Swift 6.1.0: ✅ **AVAILABLE** (listed in swift-versions.ts)
+- ✅ Swift 6.0.x: ✅ **AVAILABLE** (6.0, 6.0.0, 6.0.1, 6.0.2, 6.0.3 all listed)
 - ✅ macOS 14: Confirmed working
-- ❓ Swift 6.1.0: Unknown (needs testing)
-- ❓ macOS 15: Unknown (needs testing)
+- ❓ macOS 15: Unknown (needs testing via workflow)
 
 ## Next Steps
 

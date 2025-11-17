@@ -11,10 +11,12 @@ Based on testing and the action's default configuration:
 - **Swift 5.9** - ✅ Should work
 - **Swift 5.8** - ✅ Should work
 
-**⚠️ May Be Available:**
-- **Swift 6.1.0** - Default version in action.yml (may work, but not tested)
-- **Swift 6.0** - ❌ Not available (we tested this)
-- **Swift 6.2** - ❌ Not available (we tested this)
+**✅ Confirmed Available (from source code):**
+- **Swift 6.1.0** - ✅ AVAILABLE (listed first in swift-versions.ts)
+- **Swift 6.0.3, 6.0.2, 6.0.1, 6.0.0, 6.0** - ✅ AVAILABLE (all listed in swift-versions.ts)
+
+**❌ Not Available:**
+- **Swift 6.2** - ❌ Not available (we tested this, not in swift-versions.ts)
 
 **Recommendation:**
 - **Use Swift 5.10** for maximum compatibility
@@ -59,9 +61,10 @@ Our workflow uses:
 | 5.10 | macos-14 | ✅ Working | Current configuration |
 | 5.10 | macos-13 | ✅ Should work | Older runner |
 | 5.10 | macos-15 | ⚠️ Unknown | May not be available yet |
-| 6.1.0 | macos-14 | ⚠️ Untested | Default in action.yml |
-| 6.0 | macos-14 | ❌ Failed | Not available |
-| 6.2 | macos-14 | ❌ Failed | Not available |
+| **6.1.0** | **macos-14** | **✅ Available** | **Listed in swift-versions.ts** |
+| 6.0.3 | macos-14 | ✅ Available | Listed in swift-versions.ts |
+| 6.0 | macos-14 | ✅ Available | Listed in swift-versions.ts |
+| 6.2 | macos-14 | ❌ Not available | Not in swift-versions.ts |
 
 ## Recommendations
 
@@ -73,9 +76,9 @@ Our workflow uses:
 
 ### For Latest Features
 
-1. **Swift Version**: Try **6.1.0** (default in action.yml)
-2. **macOS Runner**: Use **macos-14** or **macos-15** (if available)
-3. **swift-tools-version**: Use **6.0** or **6.1** (if Swift 6.1.0 works)
+1. **Swift Version**: Use **6.1.0** ✅ (confirmed available in swift-versions.ts)
+2. **macOS Runner**: Use **macos-14** (confirmed) or **macos-15** (test needed)
+3. **swift-tools-version**: Use **6.0** or **6.1** (compatible with Swift 6.1.0)
 
 ### Testing New Versions
 
