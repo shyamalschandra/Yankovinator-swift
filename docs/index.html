@@ -244,10 +244,7 @@
             <div class="demo-container">
                 <div class="demo-input">
                     <h3>Original Lyrics</h3>
-                    <textarea id="originalLyrics" placeholder="Enter your lyrics here...">I want you to stay
-'Til I'm in the grave
-'Til I rot away, dead and buried
-'Til I'm in the casket you carry</textarea>
+                    <textarea id="originalLyrics" placeholder="Enter your lyrics here..."></textarea>
                 </div>
                 <div class="demo-arrow">
                     <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -369,7 +366,37 @@
                         </div>
                         <div class="step-card">
                             <div class="step-number">3</div>
-                            <h3>Set Up Ollama</h3>
+                            <h3>Install Ollama</h3>
+                            <p style="margin-bottom: 1rem; color: #666;">Download and install Ollama from <a href="https://ollama.ai/download" target="_blank" style="color: #667eea;">ollama.ai/download</a></p>
+                            <p style="margin-bottom: 1rem; color: #666;">Or install via Homebrew:</p>
+                            <div class="code-block">
+                                <code>brew install ollama</code>
+                                <button class="copy-btn" data-copy="brew install ollama">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="step-card">
+                            <div class="step-number">4</div>
+                            <h3>Start Ollama</h3>
+                            <p style="margin-bottom: 1rem; color: #666;">If using GUI: Launch Ollama from Applications. If using CLI:</p>
+                            <div class="code-block">
+                                <code>ollama serve</code>
+                                <button class="copy-btn" data-copy="ollama serve">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="step-card">
+                            <div class="step-number">5</div>
+                            <h3>Download llama3.2:3b Model</h3>
+                            <p style="margin-bottom: 1rem; color: #666;">In Ollama GUI: Search for "llama3.2:3b" and click Download. Or via CLI:</p>
                             <div class="code-block">
                                 <code>ollama pull llama3.2:3b</code>
                                 <button class="copy-btn" data-copy="ollama pull llama3.2:3b">
@@ -381,7 +408,7 @@
                             </div>
                         </div>
                         <div class="step-card">
-                            <div class="step-number">4</div>
+                            <div class="step-number">6</div>
                             <h3>Generate Your First Parody</h3>
                             <div class="code-block">
                                 <code>yankovinator lyrics.txt --keywords themes.txt</code>
@@ -426,7 +453,37 @@
                         </div>
                         <div class="step-card">
                             <div class="step-number">3</div>
-                            <h3>Set Up Ollama</h3>
+                            <h3>Install Ollama</h3>
+                            <p style="margin-bottom: 1rem; color: #666;">Download and install Ollama from <a href="https://ollama.ai/download" target="_blank" style="color: #667eea;">ollama.ai/download</a></p>
+                            <p style="margin-bottom: 1rem; color: #666;">Or install via Homebrew:</p>
+                            <div class="code-block">
+                                <code>brew install ollama</code>
+                                <button class="copy-btn" data-copy="brew install ollama">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="step-card">
+                            <div class="step-number">4</div>
+                            <h3>Start Ollama</h3>
+                            <p style="margin-bottom: 1rem; color: #666;">If using GUI: Launch Ollama from Applications. If using CLI:</p>
+                            <div class="code-block">
+                                <code>ollama serve</code>
+                                <button class="copy-btn" data-copy="ollama serve">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="step-card">
+                            <div class="step-number">5</div>
+                            <h3>Download llama3.2:3b Model</h3>
+                            <p style="margin-bottom: 1rem; color: #666;">In Ollama GUI: Search for "llama3.2:3b" and click Download. Or via CLI:</p>
                             <div class="code-block">
                                 <code>ollama pull llama3.2:3b</code>
                                 <button class="copy-btn" data-copy="ollama pull llama3.2:3b">
@@ -438,7 +495,7 @@
                             </div>
                         </div>
                         <div class="step-card">
-                            <div class="step-number">4</div>
+                            <div class="step-number">6</div>
                             <h3>Generate Your First Parody</h3>
                             <div class="code-block">
                                 <code>swift run yankovinator lyrics.txt --keywords themes.txt</code>

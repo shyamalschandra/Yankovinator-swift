@@ -7,8 +7,8 @@ import PackageDescription
 let package = Package(
     name: "Yankovinator",
     platforms: [
-        .macOS(.v14),  // Build target (runtime requires macOS 15.0+ for Foundation Models)
-        .iOS(.v17)     // Build target (runtime requires iOS 18.0+ for Foundation Models)
+        .macOS(.v13),
+        .iOS(.v16)
     ],
     products: [
         .library(
@@ -26,11 +26,14 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.3.0"),
+        .package(url: "https://github.com/swift-server/async-http-client", from: "1.20.0"),
     ],
     targets: [
         .target(
             name: "Yankovinator",
-            dependencies: []),
+            dependencies: [
+                .product(name: "AsyncHTTPClient", package: "async-http-client"),
+            ]),
         .executableTarget(
             name: "YankovinatorCLI",
             dependencies: [

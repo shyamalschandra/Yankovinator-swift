@@ -4,11 +4,11 @@
 # https://github.com/shyamalschandra/homebrew-yankovinator-swift
 
 class YankovinatorSwift < Formula
-  desc "Convert songs into parodies with theme-based constraints using Apple's Foundation Models"
+  desc "Convert songs into parodies with theme-based constraints using Ollama"
   homepage "https://github.com/shyamalschandra/Yankovinator-swift"
-  version "2.0.0"  # Updated for Foundation Models migration
-  # Requires macOS 15.0+ (Sequoia) for Foundation Models support
-  depends_on :macos => :sequoia
+  version "1.0.0"
+  # Requires macOS 13.0+ for Ollama support
+  depends_on :macos => :ventura
   
   # Determine architecture
   if Hardware::CPU.arm?

@@ -1,5 +1,5 @@
 // Copyright (C) 2025, Shyamal Suhana Chandra
-// Command-line interface for generating keywords with definitions using Foundation Models
+// Command-line interface for generating keywords with definitions using Ollama
 
 import Foundation
 import ArgumentParser
@@ -9,9 +9,9 @@ import Yankovinator
 struct KeywordGeneratorCLI: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "keyword-generator",
-        abstract: "Generate keyword:definition pairs from subjects using Foundation Models",
+        abstract: "Generate keyword:definition pairs from subjects using Ollama LLM",
         discussion: """
-        Keyword Generator uses Apple's Foundation Models to generate
+        Keyword Generator uses Ollama's LLM (llama3.2:3b by default) to generate
         keyword:definition pairs based on one or more subjects you provide.
         
         The output is formatted as keyword: definition (one per line), suitable for
@@ -29,8 +29,11 @@ struct KeywordGeneratorCLI: AsyncParsableCommand {
     @Option(name: .shortAndLong, help: "Number of keyword pairs to generate (default: 10)")
     var count: Int = 10
     
-    @Option(name: .shortAndLong, help: "Foundation Models model identifier (uses default if not specified)")
-    var modelIdentifier: String?
+    @Option(name: [.long, .customShort("u")], help: "Ollama API base URL")
+    var ollamaURL: String = "http://localhost:11434"
+    
+    @Option(name: .shortAndLong, help: "Ollama model name (default: llama3.2:3b)")
+    var model: String = "llama3.2:3b"
     
     @Option(name: .shortAndLong, help: "Output file path (default: stdout)")
     var output: String?
@@ -65,12 +68,16 @@ struct KeywordGeneratorCLI: AsyncParsableCommand {
             throw ValidationError("Count cannot exceed 100 (to avoid excessive generation)")
         }
         
-        // Trim and validate model identifier if provided
-        if let identifier = modelIdentifier {
-            modelIdentifier = identifier.trimmingCharacters(in: .whitespacesAndNewlines)
-            if modelIdentifier?.isEmpty == true {
-                modelIdentifier = nil
-            }
+        // Trim and validate Ollama URL
+        ollamaURL = ollamaURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !ollamaURL.isEmpty else {
+            throw ValidationError("Ollama URL cannot be empty")
+        }
+        
+        // Trim and validate model name
+        model = model.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !model.isEmpty else {
+            throw ValidationError("Model name cannot be empty")
         }
         
         // Trim and validate output file if provided
@@ -85,43 +92,22 @@ struct KeywordGeneratorCLI: AsyncParsableCommand {
     
     func run() async throws {
         if verbose {
-            print("Keyword Generator - Using Foundation Models")
+            print("Keyword Generator - Using Ollama LLM")
             print("Copyright (C) 2025, Shyamal Suhana Chandra")
             print("")
             print("Subjects: \(subjects.joined(separator: ", "))")
             print("Count: \(count)")
-            if let identifier = modelIdentifier {
-                print("Model: \(identifier)")
-            } else {
-                print("Model: default")
-            }
+            print("Model: \(model)")
+            print("Ollama URL: \(ollamaURL)")
             print("")
         }
         
-        // Create Foundation Models client
-        guard #available(macOS 15.0, iOS 18.0, *) else {
-            throw ValidationError("Foundation Models requires macOS 15+ or iOS 18+")
-        }
+        // Create Ollama client
+        let client = OllamaClient(baseURL: ollamaURL, model: model)
         
-        let client: FoundationModelsClient
-        do {
-            client = try FoundationModelsClient(modelIdentifier: modelIdentifier)
-        } catch let error as FoundationModelsError {
-            throw ValidationError("""
-            \(error.description)
-            
-            Foundation Models requires macOS 15+ or iOS 18+.
-            Please ensure you're running on a supported platform.
-            """)
-        } catch {
-            throw ValidationError("""
-            Failed to initialize Foundation Models: \(error.localizedDescription)
-            """)
-        }
-        
-        // Check Foundation Models availability
+        // Check Ollama connection
         if verbose {
-            print("Checking Foundation Models availability...")
+            print("Checking Ollama connection...")
         }
         
         let isAvailable = try await client.checkAvailability()
@@ -129,23 +115,26 @@ struct KeywordGeneratorCLI: AsyncParsableCommand {
         if !isAvailable {
             do {
                 try await client.verifyModel()
-            } catch let error as FoundationModelsError {
+            } catch let error as OllamaError {
                 throw ValidationError("""
                 \(error.description)
                 
-                Foundation Models requires macOS 15+ or iOS 18+.
-                Please ensure you're running on a supported platform.
+                To fix this:
+                1. Ensure Ollama is running: ollama serve
+                2. Install the model: ollama pull \(model)
+                3. Verify model exists: ollama list
                 """)
             } catch {
                 throw ValidationError("""
-                Foundation Models is not available.
+                Ollama is not available at \(ollamaURL).
+                Please ensure Ollama is running and accessible.
                 Error: \(error.localizedDescription)
                 """)
             }
         }
         
         if verbose {
-            print("Foundation Models available!")
+            print("Ollama connection successful!")
             print("Generating keywords...")
             print("")
         }
@@ -154,16 +143,21 @@ struct KeywordGeneratorCLI: AsyncParsableCommand {
         let keywords: [String: String]
         do {
             keywords = try await client.generateKeywords(from: subjects, count: count)
-        } catch let error as FoundationModelsError {
+        } catch let error as OllamaError {
             var errorMsg = error.description
             
-            if case .modelUnavailable = error {
+            if case .modelNotFound(let modelName) = error {
                 errorMsg += "\n\n"
-                errorMsg += "Foundation Models requires macOS 15+ or iOS 18+.\n"
-                errorMsg += "Please ensure you're running on a supported platform.\n"
-            } else if case .generationError(let underlyingError) = error {
+                errorMsg += "To fix this:\n"
+                errorMsg += "1. Check available models: ollama list\n"
+                errorMsg += "2. Install the model: ollama pull \(modelName)\n"
+                errorMsg += "3. Or use an existing model with --model flag\n"
+            } else if case .httpError(let statusCode, let message) = error {
                 errorMsg += "\n\n"
-                errorMsg += "Generation error: \(underlyingError.localizedDescription)\n"
+                errorMsg += "HTTP Error \(statusCode)\(message)\n"
+                errorMsg += "To fix this:\n"
+                errorMsg += "1. Ensure Ollama is running: ollama serve\n"
+                errorMsg += "2. Verify Ollama is accessible at: \(ollamaURL)\n"
             }
             
             throw ValidationError(errorMsg)
@@ -171,16 +165,19 @@ struct KeywordGeneratorCLI: AsyncParsableCommand {
             throw ValidationError("""
             Unexpected error during keyword generation: \(error.localizedDescription)
             
-            Please ensure Foundation Models is available on your system (macOS 15+ or iOS 18+).
+            To fix this:
+            1. Ensure Ollama is running: ollama serve
+            2. Check Ollama logs for details
+            3. Verify the model exists: ollama list
             """)
         }
         
         guard !keywords.isEmpty else {
             throw ValidationError("""
             No keywords were generated. This might indicate:
-            1. The Foundation Models response format was unexpected
-            2. Try increasing the count or using different subjects
-            3. Check that Foundation Models is working correctly
+            1. The LLM response format was unexpected
+            2. The model needs better prompting
+            3. Try increasing the count or using different subjects
             """)
         }
         

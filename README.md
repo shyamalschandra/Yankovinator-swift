@@ -6,7 +6,7 @@
 
 Contact **ssc56@duck.com** to license code for commercial and non-commercial purposes.
 
-Yankovinator is a Swift-based application that converts songs into parodies using Apple's NaturalLanguage framework and Foundation Models for intelligent text generation. The system maintains the original song's syllable structure while generating new lyrics that follow theme-based keyword constraints.
+Yankovinator is a Swift-based application that converts songs into parodies using Apple's NaturalLanguage framework and Ollama (llama3.2:3b) for intelligent text generation. The system maintains the original song's syllable structure while generating new lyrics that follow theme-based keyword constraints.
 
 ## Features
 
@@ -16,21 +16,22 @@ Yankovinator is a Swift-based application that converts songs into parodies usin
 - ✅ Theme advancement (not just mention, but actively develop themes)
 - ✅ Capitalization and punctuation matching (exact style preservation)
 - ✅ Theme-based keyword integration
-- ✅ Automatic keyword generation from subjects using Foundation Models
-- ✅ NaturalLanguage framework integration (Swift 6.2+)
-- ✅ Apple Foundation Models framework support (on-device AI)
+- ✅ Automatic keyword generation from subjects using Ollama
+- ✅ NaturalLanguage framework integration
+- ✅ Ollama integration (llama3.2:3b model)
 - ✅ Command-line interface
 - ✅ Comprehensive testing with XCTest
 - ✅ Full documentation (LaTeX/Beamer)
 
 ## Requirements
 
-- Swift 6.2 or later
-- macOS 15.0+ (Sequoia) or iOS 18.0+
-- Foundation Models framework (included with macOS 15+/iOS 18+)
+- Swift 5.10 or later
+- macOS 13.0+ or iOS 16.0+
+- Ollama installed and running
+- llama3.2:3b model downloaded in Ollama
 - Homebrew (for Homebrew installation method)
 
-**Note**: Foundation Models is Apple's on-device AI framework, so no external services or model downloads are required!
+**Note**: Yankovinator requires Ollama to be running locally. See the [Ollama Installation](#ollama-installation) section below for detailed setup instructions.
 
 ## Installation
 
@@ -91,9 +92,9 @@ cd Yankovinator-swift
 swift build
 ```
 
-#### 3. Verify Foundation Models
+#### 3. Install and Set Up Ollama
 
-Foundation Models is included with macOS 15+ and iOS 18+. No additional setup is required!
+Yankovinator requires Ollama to be installed and running. See the [Ollama Installation](#ollama-installation) section below for complete setup instructions.
 
 ## Usage
 
@@ -114,7 +115,8 @@ swift run keyword-generator <subject1> [subject2] ... [options]
 
 **Options:**
 - `--count, -c <number>`: Number of keyword pairs to generate (default: 10, max: 100)
-- `--model-identifier, -m <id>`: Foundation Models model identifier (uses default if not specified)
+- `--ollama-url, -u <url>`: Ollama API base URL (default: http://localhost:11434)
+- `--model, -m <name>`: Ollama model name (default: llama3.2:3b)
 - `--output, -o <file>`: Output file path (default: stdout)
 - `--verbose, -v`: Verbose output
 
@@ -154,7 +156,8 @@ The wrapper script automatically:
 
 **Options:**
 - `--keywords, -k <file>`: Path to keywords file (format: `keyword: definition`)
-- `--model-identifier, -m <id>`: Foundation Models model identifier (uses default if not specified)
+- `--ollama-url, -u <url>`: Ollama API base URL (default: http://localhost:11434)
+- `--model, -m <name>`: Ollama model name (default: llama3.2:3b)
 - `--output, -o <file>`: Output file path (default: stdout)
 - `--analyze, -a`: Show syllable analysis
 - `--verbose, -v`: Verbose output
@@ -165,14 +168,14 @@ The wrapper script automatically:
 swift run yankovinator lyrics.txt --keywords themes.txt --output parody.txt --analyze --verbose
 ```
 
-**Example (multi-line with backslashes):**
+**Example (with custom Ollama URL and model):**
 
 ```bash
 swift run yankovinator lyrics.txt \
   --keywords themes.txt \
-  --output parody.txt \
-  --analyze \
-  --verbose
+  --ollama-url http://localhost:11434 \
+  --model llama3.2:3b \
+  --output parody.txt
 ```
 
 **Example (using wrapper script):**
@@ -200,7 +203,9 @@ let keywords = [
 
 let parody = try await Yankovinator.generateParody(
     originalLyrics: lyrics,
-    keywords: keywords
+    keywords: keywords,
+    ollamaURL: "http://localhost:11434",
+    ollamaModel: "llama3.2:3b"
 )
 
 for line in parody {
@@ -244,7 +249,7 @@ The tests include:
 - Integration tests for parody generation
 - Keyword extraction tests
 
-**Note:** Integration tests require Ollama to be running. They will be skipped if Ollama is not available.
+**Note:** Integration tests require Ollama to be running with the llama3.2:3b model installed. They will be skipped if Ollama is not available.
 
 ## Documentation
 
@@ -287,24 +292,17 @@ The reference manual provides comprehensive API documentation including:
 ### Core Components
 
 1. **SyllableCounter**: Analyzes syllable structure using NaturalLanguage framework
-2. **FoundationModelsClient**: Interfaces with Apple's Foundation Models framework for parody generation
+2. **OllamaClient**: Interfaces with Ollama API for parody generation
 3. **ParodyGenerator**: Orchestrates the parody creation process
 4. **Yankovinator**: Main library interface
 
 ### Technology Stack
 
-- **Swift 6.2+**: Primary programming language
+- **Swift 5.10+**: Primary programming language
 - **NaturalLanguage**: Apple framework for linguistic analysis
-- **Foundation Models**: Apple's on-device AI framework for text generation
+- **Ollama**: Local LLM server (llama3.2:3b model)
+- **AsyncHTTPClient**: HTTP client for Ollama API communication
 - **ArgumentParser**: CLI argument parsing
-
-### Migration from Ollama
-
-Yankovinator has been migrated from Ollama to Apple's Foundation Models framework. This provides:
-- **No external dependencies**: No need to run Ollama server
-- **On-device processing**: All AI processing happens locally
-- **Better integration**: Native Apple framework integration
-- **Improved performance**: Optimized for Apple Silicon
 
 ## Algorithm
 
@@ -323,7 +321,7 @@ The syllable counting algorithm uses:
    - Extract syllable count requirement (total and word-by-word)
    - Determine rhyming constraints
    - Build prompt with theme keywords and semantic context
-   - Request generation from Ollama with previous lines for coherence
+   - Request generation from Ollama (llama3.2:3b) with previous lines for coherence
    - Validate and clean response
    - Refine word-by-word syllable matching
    - Refine semantic coherence with previous lines
@@ -348,22 +346,145 @@ swift run benchmark --lyrics data/test_short.txt --keywords data/test_keywords.t
 
 This will run multiple iterations and provide average performance metrics.
 
-## Troubleshooting
+## Ollama Installation
 
-### Foundation Models not available
+Yankovinator requires Ollama to be installed and running on your macOS system. Follow these steps to set up Ollama:
 
-Foundation Models requires macOS 15.0+ (Sequoia) or iOS 18.0+. Ensure you're running on a supported platform:
+### Method 1: Install Ollama GUI (Recommended)
+
+1. **Download Ollama for macOS:**
+   - Visit [https://ollama.ai/download](https://ollama.ai/download)
+   - Download the macOS installer (`.dmg` file)
+
+2. **Install Ollama:**
+   - Open the downloaded `.dmg` file
+   - Drag the Ollama icon to your Applications folder
+   - Launch Ollama from Applications
+
+3. **Verify Ollama is running:**
+   - Look for the Ollama icon in your menu bar (top right)
+   - Click the icon to open the Ollama GUI
+   - The GUI will show "Ollama is running" when active
+
+4. **Download the llama3.2:3b model:**
+   - In the Ollama GUI, click "Models" or use the search bar
+   - Search for "llama3.2:3b"
+   - Click "Download" to install the model
+   - Wait for the download to complete (approximately 2GB)
+
+### Method 2: Install Ollama via Homebrew
+
+1. **Install Ollama:**
+   ```bash
+   brew install ollama
+   ```
+
+2. **Start Ollama service:**
+   ```bash
+   ollama serve
+   ```
+   (This will run in the foreground. For background service, see below)
+
+3. **Download the llama3.2:3b model:**
+   ```bash
+   ollama pull llama3.2:3b
+   ```
+
+4. **Verify installation:**
+   ```bash
+   ollama list  # Should show llama3.2:3b
+   ```
+
+### Running Ollama as a Background Service
+
+If you installed via Homebrew and want Ollama to run automatically:
+
+1. **Create a LaunchAgent (macOS):**
+   ```bash
+   # Create the plist file
+   cat > ~/Library/LaunchAgents/com.ollama.ollama.plist << EOF
+   <?xml version="1.0" encoding="UTF-8"?>
+   <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+   <plist version="1.0">
+   <dict>
+       <key>Label</key>
+       <string>com.ollama.ollama</string>
+       <key>ProgramArguments</key>
+       <array>
+           <string>/usr/local/bin/ollama</string>
+           <string>serve</string>
+       </array>
+       <key>RunAtLoad</key>
+       <true/>
+       <key>KeepAlive</key>
+       <true/>
+   </dict>
+   </plist>
+   EOF
+   
+   # Load the service
+   launchctl load ~/Library/LaunchAgents/com.ollama.ollama.plist
+   ```
+
+2. **Or use the Ollama GUI** (automatically runs as a service)
+
+### Verify Ollama Setup
+
+Test that Ollama is working correctly:
 
 ```bash
-sw_vers  # Check macOS version (should be 15.0 or later)
+# Check if Ollama is running
+curl http://localhost:11434/api/tags
+
+# Test the model
+ollama run llama3.2:3b "Hello, how are you?"
 ```
 
-### Model initialization errors
+If you see a response, Ollama is working correctly!
 
-If you encounter model initialization errors, try:
-1. Ensure you're running macOS 15.0+ or iOS 18.0+
-2. Check that Foundation Models framework is available
-3. Try using the default model (omit `--model-identifier`)
+## Troubleshooting
+
+### Ollama not running
+
+If you get connection errors, ensure Ollama is running:
+
+```bash
+# Check if Ollama is running
+curl http://localhost:11434/api/tags
+
+# If not running, start it:
+# GUI: Open Ollama from Applications
+# CLI: ollama serve
+```
+
+### Model not found
+
+If you get "Model not found" errors:
+
+```bash
+# List installed models
+ollama list
+
+# If llama3.2:3b is not listed, download it:
+ollama pull llama3.2:3b
+
+# Verify the model is available
+ollama show llama3.2:3b
+```
+
+### Connection refused
+
+If you get "Connection refused" errors:
+
+1. Ensure Ollama is running (check menu bar icon or run `ollama serve`)
+2. Verify Ollama is listening on the correct port:
+   ```bash
+   lsof -i :11434
+   ```
+3. Check if you need to use a different URL:
+   ```bash
+   yankovinator lyrics.txt --ollama-url http://localhost:11434
+   ```
 
 ### Syllable count mismatch
 
@@ -381,5 +502,6 @@ Contact **ssc56@duck.com** to license code for commercial and non-commercial pur
 
 - [Apple NaturalLanguage Framework](https://developer.apple.com/documentation/NaturalLanguage)
 - [Ollama Documentation](https://ollama.ai/docs)
+- [Ollama Download](https://ollama.ai/download)
 - [Swift Package Manager](https://swift.org/package-manager/)
 

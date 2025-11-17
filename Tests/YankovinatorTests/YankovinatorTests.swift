@@ -29,8 +29,8 @@ final class YankovinatorTests: XCTestCase {
     }
     
     func testParodyGeneration() async throws {
-        // This is an integration test that requires Foundation Models
-        // Skip if Foundation Models is not available (requires macOS 15+ or iOS 18+)
+        // This is an integration test that requires Ollama
+        // Skip if Ollama is not available
         
         let lyrics = [
             "Twinkle twinkle little star",
@@ -42,22 +42,14 @@ final class YankovinatorTests: XCTestCase {
             "stars": "luminous celestial bodies"
         ]
         
-        // Check if Foundation Models is available first
-        let generator: ParodyGenerator
-        do {
-            generator = try ParodyGenerator()
-        } catch {
-            print("⚠️  Foundation Models not available - skipping integration test")
-            print("⚠️  Foundation Models requires macOS 15.0+ or iOS 18.0+")
-            return
-        }
+        // Check if Ollama is available first
+        let generator = ParodyGenerator()
         
         do {
-            let isAvailable = try await generator.validateFoundationModelsConnection()
+            let isAvailable = try await generator.validateOllamaConnection()
             
             guard isAvailable else {
-                print("⚠️  Foundation Models not available - skipping integration test")
-                print("⚠️  Foundation Models requires macOS 15.0+ or iOS 18.0+")
+                print("⚠️  Ollama not available - skipping integration test")
                 return
             }
             
@@ -72,8 +64,8 @@ final class YankovinatorTests: XCTestCase {
                 XCTAssertFalse(line.isEmpty, "Parody lines should not be empty")
             }
         } catch {
-            // Foundation Models not available or connection error - skip test
-            print("⚠️  Foundation Models connection failed - skipping integration test: \(error)")
+            // Ollama not available or connection error - skip test
+            print("⚠️  Ollama connection failed - skipping integration test: \(error)")
             return
         }
     }

@@ -5,22 +5,23 @@ import Foundation
 import NaturalLanguage
 
 /// Yankovinator: Convert songs into parodies with theme-based keyword constraints
-/// Uses NaturalLanguage framework and Apple's Foundation Models for intelligent parody generation
-@available(macOS 15.0, iOS 18.0, *)
+/// Uses NaturalLanguage framework and Ollama for intelligent parody generation
 public struct Yankovinator {
     
     /// Generate a parody from original lyrics
     /// - Parameters:
     ///   - originalLyrics: Array of original song lines
     ///   - keywords: Dictionary mapping keywords to their definitions/meanings
-    ///   - modelIdentifier: Optional Foundation Models model identifier (uses default if nil)
+    ///   - ollamaURL: Optional Ollama API base URL (default: http://localhost:11434)
+    ///   - ollamaModel: Optional Ollama model name (default: llama3.2:3b)
     /// - Returns: Array of parody lines matching syllable structure
     public static func generateParody(
         originalLyrics: [String],
         keywords: [String: String],
-        modelIdentifier: String? = nil
+        ollamaURL: String = "http://localhost:11434",
+        ollamaModel: String = "llama3.2:3b"
     ) async throws -> [String] {
-        let generator = try ParodyGenerator(modelIdentifier: modelIdentifier)
+        let generator = ParodyGenerator(ollamaBaseURL: ollamaURL, ollamaModel: ollamaModel)
         return try await generator.generateParody(originalLyrics: originalLyrics, keywords: keywords)
     }
     

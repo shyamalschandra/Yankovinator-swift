@@ -9,9 +9,9 @@ import Yankovinator
 struct BenchmarkCLI: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "benchmark",
-        abstract: "Benchmark Yankovinator performance with Foundation Models",
+        abstract: "Benchmark Yankovinator performance with Ollama",
         discussion: """
-        Benchmark tool to measure Yankovinator's performance using Foundation Models.
+        Benchmark tool to measure Yankovinator's performance using Ollama.
         
         Example usage:
           swift run benchmark --lyrics data/test_short.txt --keywords data/test_keywords.txt
@@ -24,6 +24,12 @@ struct BenchmarkCLI: AsyncParsableCommand {
     @Option(name: .shortAndLong, help: "Path to keywords file")
     var keywords: String?
     
+    @Option(name: .shortAndLong, help: "Ollama base URL (default: http://localhost:11434)")
+    var ollamaURL: String = "http://localhost:11434"
+    
+    @Option(name: .shortAndLong, help: "Ollama model name (default: llama3.2:3b)")
+    var model: String = "llama3.2:3b"
+    
     @Option(name: .shortAndLong, help: "Number of iterations (default: 1)")
     var iterations: Int = 1
     
@@ -32,7 +38,7 @@ struct BenchmarkCLI: AsyncParsableCommand {
     
     func run() async throws {
         print("=== Yankovinator Benchmark ===")
-        print("Framework: Foundation Models")
+        print("Framework: Ollama")
         print("")
         
         // Read lyrics
@@ -56,12 +62,8 @@ struct BenchmarkCLI: AsyncParsableCommand {
                 throw ValidationError("Could not read keywords file: \(keywordsFile)")
             }
             
-            if #available(macOS 15.0, iOS 18.0, *) {
-                let generator = try ParodyGenerator()
-                keywordsDict = generator.extractKeywords(from: keywordsContent)
-            } else {
-                throw ValidationError("Foundation Models requires macOS 15+ or iOS 18+")
-            }
+            let generator = ParodyGenerator(ollamaBaseURL: ollamaURL, ollamaModel: model)
+            keywordsDict = generator.extractKeywords(from: keywordsContent)
         } else {
             keywordsDict = ["parody": "humorous imitation", "creative": "original and imaginative"]
         }
@@ -70,12 +72,14 @@ struct BenchmarkCLI: AsyncParsableCommand {
             print("Test Configuration:")
             print("  Lyrics: \(lyricsLines.count) lines")
             print("  Keywords: \(keywordsDict.count) keywords")
+            print("  Ollama URL: \(ollamaURL)")
+            print("  Model: \(model)")
             print("  Iterations: \(iterations)")
             print("")
         }
         
         // Run benchmark
-        let runner = BenchmarkRunner(lyrics: lyricsLines, keywords: keywordsDict)
+        let runner = BenchmarkRunner(lyrics: lyricsLines, keywords: keywordsDict, ollamaBaseURL: ollamaURL, ollamaModel: model)
         
         var results: [BenchmarkResults] = []
         
@@ -84,7 +88,7 @@ struct BenchmarkCLI: AsyncParsableCommand {
                 print("Running iteration \(i)/\(iterations)...")
             }
             
-            let result = try await runner.benchmarkFoundationModels()
+            let result = try await runner.benchmarkOllama()
             results.append(result)
             
             if verbose {
@@ -99,7 +103,7 @@ struct BenchmarkCLI: AsyncParsableCommand {
         
         print("")
         print("=== Benchmark Results ===")
-        print("Framework: Foundation Models")
+        print("Framework: Ollama")
         print("Iterations: \(iterations)")
         print("Average Total Time: \(String(format: "%.2f", avgTotalTime))s")
         print("Average Time per Line: \(String(format: "%.2f", avgPerLine))s")

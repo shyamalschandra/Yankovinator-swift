@@ -5,23 +5,16 @@ import Foundation
 import NaturalLanguage
 
 /// ParodyGenerator orchestrates the conversion of songs into parodies
-@available(macOS 15.0, iOS 18.0, *)
 public class ParodyGenerator {
-    #if canImport(FoundationModels)
-    private let foundationModelsClient: FoundationModelsClient
-    #else
-    private let foundationModelsClient: Any
-    #endif
+    private let ollamaClient: OllamaClient
     private let syllableCounter: SyllableCounter.Type
     
     /// Initialize the parody generator
-    /// - Parameter modelIdentifier: Optional Foundation Models model identifier (uses default if nil)
-    public init(modelIdentifier: String? = nil) throws {
-        #if canImport(FoundationModels)
-        self.foundationModelsClient = try FoundationModelsClient(modelIdentifier: modelIdentifier)
-        #else
-        throw FoundationModelsError.modelUnavailable
-        #endif
+    /// - Parameters:
+    ///   - ollamaBaseURL: Base URL for Ollama API
+    ///   - ollamaModel: Model name to use (default: llama3.2:3b)
+    public init(ollamaBaseURL: String = "http://localhost:11434", ollamaModel: String = "llama3.2:3b") {
+        self.ollamaClient = OllamaClient(baseURL: ollamaBaseURL, model: ollamaModel)
         self.syllableCounter = SyllableCounter.self
     }
     
@@ -105,8 +98,7 @@ public class ParodyGenerator {
             let contextLines = Array(parodyLines.suffix(8).filter { !$0.isEmpty })
             var parodyLine: String
             do {
-                #if canImport(FoundationModels)
-                parodyLine = try await foundationModelsClient.generateParodyLine(
+                parodyLine = try await ollamaClient.generateParodyLine(
                     originalLine: originalLine,
                     syllableCount: syllableCount,
                     keywords: keywords,
@@ -117,10 +109,7 @@ public class ParodyGenerator {
                     wordSyllablePattern: wordSyllablePattern,
                     wordSyllables: wordSyllables.map { $0.syllables }
                 )
-                #else
-                throw FoundationModelsError.modelUnavailable
-                #endif
-            } catch let error as FoundationModelsError {
+            } catch let error as OllamaError {
                 // If generation fails, provide helpful error
                 if verbose {
                     print("\nError generating line \(index + 1): \(error.description)")
@@ -131,7 +120,7 @@ public class ParodyGenerator {
                 if verbose {
                     print("\nUnexpected error generating line \(index + 1): \(error.localizedDescription)")
                 }
-                throw FoundationModelsError.generationError(error)
+                throw OllamaError.networkError(error)
             }
             
             // Refinement passes for word-by-word syllable matching, semantic coherence, and punctuation correction
@@ -305,8 +294,7 @@ public class ParodyGenerator {
         Return ONLY the refined line, nothing else:
         """
         
-        #if canImport(FoundationModels)
-        let refined = try await foundationModelsClient.generateParodyLine(
+        let refined = try await ollamaClient.generateParodyLine(
             originalLine: originalLine,
             syllableCount: syllableCount,
             keywords: keywords,
@@ -318,9 +306,6 @@ public class ParodyGenerator {
             wordSyllablePattern: nil,
             wordSyllables: wordSyllables
         )
-        #else
-        throw FoundationModelsError.modelUnavailable
-        #endif
         
         // Validate the refined line has correct syllable count
         let refinedSyllables = syllableCounter.countSyllablesInLine(refined)
@@ -397,8 +382,7 @@ public class ParodyGenerator {
         Return ONLY the refined line, nothing else:
         """
         
-        #if canImport(FoundationModels)
-        let refined = try await foundationModelsClient.generateParodyLine(
+        let refined = try await ollamaClient.generateParodyLine(
             originalLine: originalLine,
             syllableCount: syllableCount,
             keywords: keywords,
@@ -410,9 +394,6 @@ public class ParodyGenerator {
             wordSyllablePattern: nil,
             wordSyllables: wordSyllables
         )
-        #else
-        throw FoundationModelsError.modelUnavailable
-        #endif
         
         // Validate the refined line has correct syllable count
         let refinedSyllables = syllableCounter.countSyllablesInLine(refined)
@@ -498,17 +479,13 @@ public class ParodyGenerator {
         Return ONLY the refined line, nothing else:
         """
         
-        #if canImport(FoundationModels)
-        let refined = try await foundationModelsClient.generateParodyLine(
+        let refined = try await ollamaClient.generateParodyLine(
             originalLine: originalLine,
             syllableCount: syllableCount,
             keywords: keywords,
             previousLines: [],
             customPrompt: prompt
         )
-        #else
-        throw FoundationModelsError.modelUnavailable
-        #endif
         
         // Validate the refined line has similar syllable count
         let refinedSyllables = syllableCounter.countSyllablesInLine(refined)
@@ -682,24 +659,16 @@ public class ParodyGenerator {
         return keywords
     }
     
-    /// Validate that Foundation Models is available
-    /// - Returns: True if Foundation Models is available
-    public func validateFoundationModelsConnection() async throws -> Bool {
-        #if canImport(FoundationModels)
-        return try await foundationModelsClient.checkAvailability()
-        #else
-        return false
-        #endif
+    /// Validate that Ollama is available and model exists
+    /// - Returns: True if Ollama is reachable and model is available
+    public func validateOllamaConnection() async throws -> Bool {
+        return try await ollamaClient.checkAvailability()
     }
     
     /// Verify model is available before generation
-    /// - Throws: FoundationModelsError if model is not available
+    /// - Throws: OllamaError if model is not available
     public func verifyModel() async throws {
-        #if canImport(FoundationModels)
-        try await foundationModelsClient.verifyModel()
-        #else
-        throw FoundationModelsError.modelUnavailable
-        #endif
+        try await ollamaClient.verifyModel()
     }
 }
 
