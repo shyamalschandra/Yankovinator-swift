@@ -7,8 +7,8 @@ import PackageDescription
 let package = Package(
     name: "Yankovinator",
     platforms: [
-        .macOS(.v13),
-        .iOS(.v16)
+        .macOS(.v15),  // FoundationModels requires macOS 15+ (Sequoia)
+        .iOS(.v18)     // FoundationModels requires iOS 18+
     ],
     products: [
         .library(
@@ -20,17 +20,17 @@ let package = Package(
         .executable(
             name: "keyword-generator",
             targets: ["KeywordGeneratorCLI"]),
+        .executable(
+            name: "benchmark",
+            targets: ["BenchmarkCLI"]),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.3.0"),
-        .package(url: "https://github.com/swift-server/async-http-client", from: "1.20.0"),
     ],
     targets: [
         .target(
             name: "Yankovinator",
-            dependencies: [
-                .product(name: "AsyncHTTPClient", package: "async-http-client"),
-            ]),
+            dependencies: []),
         .executableTarget(
             name: "YankovinatorCLI",
             dependencies: [
@@ -39,6 +39,12 @@ let package = Package(
             ]),
         .executableTarget(
             name: "KeywordGeneratorCLI",
+            dependencies: [
+                "Yankovinator",
+                .product(name: "ArgumentParser", package: "swift-argument-parser"),
+            ]),
+        .executableTarget(
+            name: "BenchmarkCLI",
             dependencies: [
                 "Yankovinator",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),

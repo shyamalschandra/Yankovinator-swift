@@ -11,7 +11,7 @@ struct YankovinatorCLI: AsyncParsableCommand {
         commandName: "yankovinator",
         abstract: "Convert songs into parodies with theme-based constraints",
         discussion: """
-        Yankovinator uses Apple's NaturalLanguage framework and Ollama to generate
+        Yankovinator uses Apple's NaturalLanguage framework and Foundation Models to generate
         parodies that match the syllable structure of the original song while
         following theme keywords and their definitions.
         
@@ -31,11 +31,8 @@ struct YankovinatorCLI: AsyncParsableCommand {
     @Option(name: .shortAndLong, help: "Path to file containing keywords and definitions (format: keyword: definition)")
     var keywords: String?
     
-    @Option(name: [.long, .customShort("u")], help: "Ollama API base URL")
-    var ollamaURL: String = "http://localhost:11434"
-    
-    @Option(name: .shortAndLong, help: "Ollama model name (default: llama3.2:3b)")
-    var model: String = "llama3.2:3b"
+    @Option(name: .shortAndLong, help: "Foundation Models model identifier (uses default if not specified)")
+    var modelIdentifier: String?
     
     @Option(name: .shortAndLong, help: "Output file path (default: stdout)")
     var output: String?
@@ -71,16 +68,12 @@ struct YankovinatorCLI: AsyncParsableCommand {
             """)
         }
         
-        // Trim and validate Ollama URL
-        ollamaURL = ollamaURL.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !ollamaURL.isEmpty else {
-            throw ValidationError("Ollama URL cannot be empty")
-        }
-        
-        // Trim and validate model name
-        model = model.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !model.isEmpty else {
-            throw ValidationError("Model name cannot be empty")
+        // Trim and validate model identifier if provided
+        if let identifier = modelIdentifier {
+            modelIdentifier = identifier.trimmingCharacters(in: .whitespacesAndNewlines)
+            if modelIdentifier?.isEmpty == true {
+                modelIdentifier = nil
+            }
         }
         
         // Trim and validate keywords file if provided
@@ -167,7 +160,7 @@ struct YankovinatorCLI: AsyncParsableCommand {
                 throw ValidationError("Could not read keywords file: \(keywordsFile)")
             }
             
-            let generator = ParodyGenerator(ollamaBaseURL: ollamaURL, ollamaModel: model)
+            let generator = try ParodyGenerator(modelIdentifier: modelIdentifier)
             keywordsDict = generator.extractKeywords(from: keywordsContent)
             
             if verbose {
@@ -184,38 +177,50 @@ struct YankovinatorCLI: AsyncParsableCommand {
             keywordsDict = ["parody": "humorous imitation", "creative": "original and imaginative"]
         }
         
-        // Check Ollama connection
+        // Check Foundation Models availability
         if verbose {
-            print("Checking Ollama connection...")
+            print("Checking Foundation Models availability...")
         }
         
-        let generator = ParodyGenerator(ollamaBaseURL: ollamaURL, ollamaModel: model)
-        let isAvailable = try await generator.validateOllamaConnection()
+        let generator: ParodyGenerator
+        do {
+            generator = try ParodyGenerator(modelIdentifier: modelIdentifier)
+        } catch let error as FoundationModelsError {
+            throw ValidationError("""
+            \(error.description)
+            
+            Foundation Models requires macOS 15+ or iOS 18+.
+            Please ensure you're running on a supported platform.
+            """)
+        } catch {
+            throw ValidationError("""
+            Failed to initialize Foundation Models: \(error.localizedDescription)
+            """)
+        }
+        
+        let isAvailable = try await generator.validateFoundationModelsConnection()
         
         if !isAvailable {
             // Try to get more specific error
             do {
                 try await generator.verifyModel()
-            } catch let error as OllamaError {
+            } catch let error as FoundationModelsError {
                 throw ValidationError("""
                 \(error.description)
                 
-                To fix this:
-                1. Ensure Ollama is running: ollama serve
-                2. Install the model: ollama pull \(model)
-                3. Verify model exists: ollama list
+                Foundation Models requires macOS 15+ or iOS 18+.
+                Please ensure you're running on a supported platform.
                 """)
             } catch {
                 throw ValidationError("""
-                Ollama is not available at \(ollamaURL).
-                Please ensure Ollama is running and accessible.
+                Foundation Models is not available.
                 Error: \(error.localizedDescription)
                 """)
             }
         }
         
         if verbose {
-            print("Ollama connection successful!")
+            print("Foundation Models available!")
             print("Generating parody...")
             print("")
         }
@@ -239,32 +244,21 @@ struct YankovinatorCLI: AsyncParsableCommand {
             if verbose {
                 print("\n")
             }
-        } catch let error as OllamaError {
+        } catch let error as FoundationModelsError {
             var errorMsg = error.description
             
             // Provide helpful suggestions based on error type
-            if case .modelNotFound(let modelName) = error {
+            if case .modelUnavailable = error {
                 errorMsg += "\n\n"
-                errorMsg += "To fix this:\n"
-                errorMsg += "1. Check available models: ollama list\n"
-                errorMsg += "2. Install the model: ollama pull \(modelName)\n"
-                errorMsg += "   (Note: Model names may include tags like 'llama3.2:3b')\n"
-                errorMsg += "3. Or use an existing model with --model flag\n"
-                errorMsg += "   Example: --model llama3.2:3b\n"
-            } else if case .httpError(let statusCode, let message) = error {
+                errorMsg += "Foundation Models requires macOS 15+ or iOS 18+.\n"
+                errorMsg += "Please ensure you're running on a supported platform.\n"
+            } else if case .generationError(let underlyingError) = error {
                 errorMsg += "\n\n"
-                errorMsg += "HTTP Error \(statusCode)\(message)\n"
-                errorMsg += "To fix this:\n"
-                errorMsg += "1. Ensure Ollama is running: ollama serve\n"
-                errorMsg += "2. Verify Ollama is accessible at: \(ollamaURL)\n"
-                errorMsg += "3. Check if the model exists: ollama list\n"
-                errorMsg += "4. Try a different model: --model <model-name>\n"
+                errorMsg += "Generation error: \(underlyingError.localizedDescription)\n"
+                errorMsg += "This may indicate an issue with the Foundation Models framework.\n"
             } else {
                 errorMsg += "\n\n"
-                errorMsg += "To fix this:\n"
-                errorMsg += "1. Ensure Ollama is running: ollama serve\n"
-                errorMsg += "2. Verify Ollama is accessible at: \(ollamaURL)\n"
-                errorMsg += "3. Check Ollama logs for more details\n"
+                errorMsg += "Please check that Foundation Models is properly installed and available.\n"
             }
             
             throw ValidationError(errorMsg)
@@ -273,10 +267,7 @@ struct YankovinatorCLI: AsyncParsableCommand {
             throw ValidationError("""
             Unexpected error during parody generation: \(error.localizedDescription)
             
-            To fix this:
-            1. Ensure Ollama is running: ollama serve
-            2. Check Ollama logs for details
-            3. Verify the model exists: ollama list
+            Please ensure Foundation Models is available on your system (macOS 15+ or iOS 18+).
             """)
         }
         

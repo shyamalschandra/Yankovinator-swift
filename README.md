@@ -6,7 +6,7 @@
 
 Contact **ssc56@duck.com** to license code for commercial and non-commercial purposes.
 
-Yankovinator is a Swift-based application that converts songs into parodies using Apple's NaturalLanguage framework and Ollama for intelligent text generation. The system maintains the original song's syllable structure while generating new lyrics that follow theme-based keyword constraints.
+Yankovinator is a Swift-based application that converts songs into parodies using Apple's NaturalLanguage framework and Foundation Models for intelligent text generation. The system maintains the original song's syllable structure while generating new lyrics that follow theme-based keyword constraints.
 
 ## Features
 
@@ -16,9 +16,9 @@ Yankovinator is a Swift-based application that converts songs into parodies usin
 - ✅ Theme advancement (not just mention, but actively develop themes)
 - ✅ Capitalization and punctuation matching (exact style preservation)
 - ✅ Theme-based keyword integration
-- ✅ Automatic keyword generation from subjects using Ollama
-- ✅ NaturalLanguage framework integration (Swift 6.3+)
-- ✅ Ollama LLM support (llama3.2:3b)
+- ✅ Automatic keyword generation from subjects using Foundation Models
+- ✅ NaturalLanguage framework integration (Swift 6.2+)
+- ✅ Apple Foundation Models framework support (on-device AI)
 - ✅ Command-line interface
 - ✅ Comprehensive testing with XCTest
 - ✅ Full documentation (LaTeX/Beamer)
@@ -26,10 +26,11 @@ Yankovinator is a Swift-based application that converts songs into parodies usin
 ## Requirements
 
 - Swift 6.2 or later
-- macOS 13+ or iOS 16+
-- Ollama installed and running
-- Model: llama3.2:3b (or compatible)
+- macOS 15.0+ (Sequoia) or iOS 18.0+
+- Foundation Models framework (included with macOS 15+/iOS 18+)
 - Homebrew (for Homebrew installation method)
+
+**Note**: Foundation Models is Apple's on-device AI framework, so no external services or model downloads are required!
 
 ## Installation
 
@@ -90,15 +91,9 @@ cd Yankovinator-swift
 swift build
 ```
 
-#### 3. Set up Ollama
+#### 3. Verify Foundation Models
 
-```bash
-# Start Ollama (if not already running)
-ollama serve
-
-# Pull the required model
-ollama pull llama3.2:3b
-```
+Foundation Models is included with macOS 15+ and iOS 18+. No additional setup is required!
 
 ## Usage
 
@@ -119,8 +114,7 @@ swift run keyword-generator <subject1> [subject2] ... [options]
 
 **Options:**
 - `--count, -c <number>`: Number of keyword pairs to generate (default: 10, max: 100)
-- `--ollama-url, -u <url>`: Ollama API base URL (default: http://localhost:11434)
-- `--model, -m <name>`: Ollama model name (default: llama3.2:3b)
+- `--model-identifier, -m <id>`: Foundation Models model identifier (uses default if not specified)
 - `--output, -o <file>`: Output file path (default: stdout)
 - `--verbose, -v`: Verbose output
 
@@ -160,8 +154,7 @@ The wrapper script automatically:
 
 **Options:**
 - `--keywords, -k <file>`: Path to keywords file (format: `keyword: definition`)
-- `--ollama-url, -u <url>`: Ollama API base URL (default: http://localhost:11434)
-- `--model, -m <name>`: Ollama model name (default: llama3.2)
+- `--model-identifier, -m <id>`: Foundation Models model identifier (uses default if not specified)
 - `--output, -o <file>`: Output file path (default: stdout)
 - `--analyze, -a`: Show syllable analysis
 - `--verbose, -v`: Verbose output
@@ -294,7 +287,7 @@ The reference manual provides comprehensive API documentation including:
 ### Core Components
 
 1. **SyllableCounter**: Analyzes syllable structure using NaturalLanguage framework
-2. **OllamaClient**: Interfaces with Ollama API for parody generation
+2. **FoundationModelsClient**: Interfaces with Apple's Foundation Models framework for parody generation
 3. **ParodyGenerator**: Orchestrates the parody creation process
 4. **Yankovinator**: Main library interface
 
@@ -302,9 +295,16 @@ The reference manual provides comprehensive API documentation including:
 
 - **Swift 6.2+**: Primary programming language
 - **NaturalLanguage**: Apple framework for linguistic analysis
-- **Ollama**: Local LLM for text generation
-- **AsyncHTTPClient**: Asynchronous HTTP client for API communication
+- **Foundation Models**: Apple's on-device AI framework for text generation
 - **ArgumentParser**: CLI argument parsing
+
+### Migration from Ollama
+
+Yankovinator has been migrated from Ollama to Apple's Foundation Models framework. This provides:
+- **No external dependencies**: No need to run Ollama server
+- **On-device processing**: All AI processing happens locally
+- **Better integration**: Native Apple framework integration
+- **Improved performance**: Optimized for Apple Silicon
 
 ## Algorithm
 
@@ -338,23 +338,32 @@ Yankovinator employs advanced semantic coherence techniques:
 - **Semantic Refinement**: Dedicated refinement pass ensures lines work together thematically
 - **Narrative Flow**: Maintains logical progression and consistent imagery throughout
 
+## Benchmarking
+
+Yankovinator includes a built-in benchmarking tool to measure performance:
+
+```bash
+swift run benchmark --lyrics data/test_short.txt --keywords data/test_keywords.txt --iterations 5
+```
+
+This will run multiple iterations and provide average performance metrics.
+
 ## Troubleshooting
 
-### Ollama not found
+### Foundation Models not available
 
-Ensure Ollama is running at the specified URL:
-
-```bash
-ollama serve
-```
-
-### Model not available
-
-Pull the required model:
+Foundation Models requires macOS 15.0+ (Sequoia) or iOS 18.0+. Ensure you're running on a supported platform:
 
 ```bash
-ollama pull llama3.2
+sw_vers  # Check macOS version (should be 15.0 or later)
 ```
+
+### Model initialization errors
+
+If you encounter model initialization errors, try:
+1. Ensure you're running macOS 15.0+ or iOS 18.0+
+2. Check that Foundation Models framework is available
+3. Try using the default model (omit `--model-identifier`)
 
 ### Syllable count mismatch
 

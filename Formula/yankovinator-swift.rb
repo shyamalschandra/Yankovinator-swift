@@ -4,9 +4,11 @@
 # https://github.com/shyamalschandra/homebrew-yankovinator-swift
 
 class YankovinatorSwift < Formula
-  desc "Convert songs into parodies with theme-based constraints using AI"
+  desc "Convert songs into parodies with theme-based constraints using Apple's Foundation Models"
   homepage "https://github.com/shyamalschandra/Yankovinator-swift"
-  version "1.0.0"  # Update this when creating a new release
+  version "2.0.0"  # Updated for Foundation Models migration
+  # Requires macOS 15.0+ (Sequoia) for Foundation Models support
+  depends_on :macos => :sequoia
   
   # Determine architecture
   if Hardware::CPU.arm?
@@ -29,10 +31,12 @@ class YankovinatorSwift < Formula
     # Extract and install binaries
     bin.install "yankovinator"
     bin.install "keyword-generator"
+    bin.install "benchmark" if File.exist?("benchmark")
   end
   
   test do
     system "#{bin}/yankovinator", "--help"
     system "#{bin}/keyword-generator", "--help"
+    system "#{bin}/benchmark", "--help" if File.exist?("#{bin}/benchmark")
   end
 end
