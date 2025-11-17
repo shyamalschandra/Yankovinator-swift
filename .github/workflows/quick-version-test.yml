@@ -1,0 +1,49 @@
+name: Quick Version Test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-swift-6.1.0:
+    name: Test Swift 6.1.0
+    runs-on: macos-14
+    steps:
+      - name: Test Swift 6.1.0
+        id: test-swift
+        continue-on-error: true
+        uses: swift-actions/setup-swift@v1
+        with:
+          swift-version: "6.1.0"
+      
+      - name: Report Result
+        if: always()
+        run: |
+          if [ "${{ steps.test-swift.outcome }}" == "success" ]; then
+            echo "✅ Swift 6.1.0 is AVAILABLE"
+            swift --version
+          else
+            echo "❌ Swift 6.1.0 is NOT AVAILABLE"
+          fi
+
+  test-macos-15:
+    name: Test macOS 15
+    runs-on: macos-15
+    continue-on-error: true
+    steps:
+      - name: Check macOS Version
+        run: |
+          sw_vers
+          echo "✅ macOS 15 runner is AVAILABLE"
+      
+      - name: Report Result
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ macOS 15 runner is AVAILABLE"
+            sw_vers
+          else
+            echo "❌ macOS 15 runner is NOT AVAILABLE"
+          fi
