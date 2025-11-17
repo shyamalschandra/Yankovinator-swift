@@ -72,6 +72,7 @@ public struct BenchmarkComparison {
 }
 
 /// Benchmark runner for comparing Foundation Models and Ollama
+@available(macOS 15.0, iOS 18.0, *)
 public class BenchmarkRunner {
     private let testLyrics: [String]
     private let testKeywords: [String: String]

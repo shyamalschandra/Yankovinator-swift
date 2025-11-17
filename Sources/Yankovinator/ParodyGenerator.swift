@@ -5,14 +5,23 @@ import Foundation
 import NaturalLanguage
 
 /// ParodyGenerator orchestrates the conversion of songs into parodies
+@available(macOS 15.0, iOS 18.0, *)
 public class ParodyGenerator {
+    #if canImport(FoundationModels)
     private let foundationModelsClient: FoundationModelsClient
+    #else
+    private let foundationModelsClient: Any
+    #endif
     private let syllableCounter: SyllableCounter.Type
     
     /// Initialize the parody generator
     /// - Parameter modelIdentifier: Optional Foundation Models model identifier (uses default if nil)
     public init(modelIdentifier: String? = nil) throws {
+        #if canImport(FoundationModels)
         self.foundationModelsClient = try FoundationModelsClient(modelIdentifier: modelIdentifier)
+        #else
+        throw FoundationModelsError.modelUnavailable
+        #endif
         self.syllableCounter = SyllableCounter.self
     }
     
@@ -96,6 +105,7 @@ public class ParodyGenerator {
             let contextLines = Array(parodyLines.suffix(8).filter { !$0.isEmpty })
             var parodyLine: String
             do {
+                #if canImport(FoundationModels)
                 parodyLine = try await foundationModelsClient.generateParodyLine(
                     originalLine: originalLine,
                     syllableCount: syllableCount,
@@ -107,6 +117,9 @@ public class ParodyGenerator {
                     wordSyllablePattern: wordSyllablePattern,
                     wordSyllables: wordSyllables.map { $0.syllables }
                 )
+                #else
+                throw FoundationModelsError.modelUnavailable
+                #endif
             } catch let error as FoundationModelsError {
                 // If generation fails, provide helpful error
                 if verbose {
@@ -292,6 +305,7 @@ public class ParodyGenerator {
         Return ONLY the refined line, nothing else:
         """
         
+        #if canImport(FoundationModels)
         let refined = try await foundationModelsClient.generateParodyLine(
             originalLine: originalLine,
             syllableCount: syllableCount,
@@ -304,6 +318,9 @@ public class ParodyGenerator {
             wordSyllablePattern: nil,
             wordSyllables: wordSyllables
         )
+        #else
+        throw FoundationModelsError.modelUnavailable
+        #endif
         
         // Validate the refined line has correct syllable count
         let refinedSyllables = syllableCounter.countSyllablesInLine(refined)
@@ -380,6 +397,7 @@ public class ParodyGenerator {
         Return ONLY the refined line, nothing else:
         """
         
+        #if canImport(FoundationModels)
         let refined = try await foundationModelsClient.generateParodyLine(
             originalLine: originalLine,
             syllableCount: syllableCount,
@@ -392,6 +410,9 @@ public class ParodyGenerator {
             wordSyllablePattern: nil,
             wordSyllables: wordSyllables
         )
+        #else
+        throw FoundationModelsError.modelUnavailable
+        #endif
         
         // Validate the refined line has correct syllable count
         let refinedSyllables = syllableCounter.countSyllablesInLine(refined)
@@ -477,6 +498,7 @@ public class ParodyGenerator {
         Return ONLY the refined line, nothing else:
         """
         
+        #if canImport(FoundationModels)
         let refined = try await foundationModelsClient.generateParodyLine(
             originalLine: originalLine,
             syllableCount: syllableCount,
@@ -484,6 +506,9 @@ public class ParodyGenerator {
             previousLines: [],
             customPrompt: prompt
         )
+        #else
+        throw FoundationModelsError.modelUnavailable
+        #endif
         
         // Validate the refined line has similar syllable count
         let refinedSyllables = syllableCounter.countSyllablesInLine(refined)
@@ -660,13 +685,21 @@ public class ParodyGenerator {
     /// Validate that Foundation Models is available
     /// - Returns: True if Foundation Models is available
     public func validateFoundationModelsConnection() async throws -> Bool {
+        #if canImport(FoundationModels)
         return try await foundationModelsClient.checkAvailability()
+        #else
+        return false
+        #endif
     }
     
     /// Verify model is available before generation
     /// - Throws: FoundationModelsError if model is not available
     public func verifyModel() async throws {
+        #if canImport(FoundationModels)
         try await foundationModelsClient.verifyModel()
+        #else
+        throw FoundationModelsError.modelUnavailable
+        #endif
     }
 }
 
